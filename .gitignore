@@ -31,3 +31,8 @@ target/
 
 # Docker
 *.log
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
