@@ -36,3 +36,4 @@ target/
 .terraform/
 *.tfstate
 *.tfstate.backup
+terraform/function-source.zip
