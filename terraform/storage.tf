@@ -21,6 +21,13 @@ resource "google_storage_bucket_iam_member" "public_read" {
   member = "allUsers"
 }
 
+# Grant the GKE Service Account permission to write to the bucket
+resource "google_storage_bucket_iam_member" "gke_sa_storage_admin" {
+  bucket = google_storage_bucket.media_bucket.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.gke_sa.email}"
+}
+
 output "media_bucket_name" {
   value = google_storage_bucket.media_bucket.name
 }
