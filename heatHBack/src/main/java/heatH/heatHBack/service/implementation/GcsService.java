@@ -21,11 +21,14 @@ public class GcsService {
     }
 
     public String uploadBase64Image(String base64Image, String fileName) {
-        byte[] decodedBytes = Base64.getDecoder().decode(base64Image.split(",")[1]); // split for "data:image/png;base64,..."
+        String[] parts = base64Image.split(",");
+        String imageString = parts.length > 1 ? parts[1] : parts[0];
+        
+        byte[] decodedBytes = Base64.getDecoder().decode(imageString);
 
         BlobId blobId = BlobId.of(bucketName, fileName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                .setContentType("image/jpeg") // or detect from base64
+                .setContentType("image/jpeg") 
                 .build();
 
         storage.create(blobInfo, decodedBytes);
