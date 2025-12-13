@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heath-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        # REPLACE WITH YOUR ACTUAL IMAGE URL
+        image: us-central1-docker.pkg.dev/heath-cloud-native/heath-repo/heath-backend:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_URL
+          value: "jdbc:postgresql://10.0.0.2:5432/heathdb" # 10.0.0.2 is the Internal IP from your Terraform Output
+        - name: DB_USERNAME
+          value: "heathuser"
+        - name: DB_PASSWORD
+          value: "securepassword123" # Should match var.db_password in variables.tf
+        # Mail Configuration (Required for startup)
+        - name: GCP_PROJECT_ID
+          value: "heath-cloud-native"
+        - name: GCP_BUCKET
+          value: "heath-cloud-native-media"
+        - name: APP_BASE_URL
+          value: "http://34.45.76.6" # Frontend LoadBalancer IP
+        - name: MAIL_HOST
+          value: "smtp.sendgrid.net"
+        - name: MAIL_PORT
+          value: "587"
+        - name: MAIL_USERNAME
+          value: "apikey"
+        - name: MAIL_PASSWORD
+          value: "placeholder_password" # Update this
+        - name: SENDGRID_API_KEY
+          value: "placeholder_key" # Update this
+        - name: FATSECRET_CLIENT_ID
+          value: "placeholder_id" # Update this
+        - name: FATSECRET_CLIENT_SECRET
+          value: "placeholder_secret" # Update this
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: heath-backend
+spec:
+  selector:
+    app: backend
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
