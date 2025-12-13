@@ -15,11 +15,7 @@ import java.io.InputStream;
 public class GcsConfig {
 
     @Bean
-    public Storage storage() throws Exception {
-        InputStream credentialsStream = new ClassPathResource("gcp-connection.json").getInputStream();
-        return StorageOptions.newBuilder()
-                .setCredentials(ServiceAccountCredentials.fromStream(credentialsStream))
-                .build()
-                .getService();
+    public Storage storage() {
+        return StorageOptions.getDefaultInstance().getService();
     }
 }
