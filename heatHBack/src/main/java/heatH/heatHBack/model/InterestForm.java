@@ -17,6 +17,7 @@ public class InterestForm {
     private LocalDate dateOfBirth;
     private Integer height;
     private Double weight;
+    @Column(name = "profile_photo", columnDefinition = "TEXT")
     private String profilePhoto;
     private String gender;
 
