@@ -18,9 +18,9 @@ resource "google_container_cluster" "primary" {
   }
 
   # Workload Identity allows Kubernetes service accounts to act as Google IAM Service Accounts
-  workload_identity_config {
-    workload_pool = "${var.project_id}.svc.id.goog"
-  }
+  # workload_identity_config {
+  #   workload_pool = "${var.project_id}.svc.id.goog"
+  # }
 }
 
 resource "google_container_node_pool" "primary_nodes" {
