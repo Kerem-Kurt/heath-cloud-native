@@ -12,6 +12,9 @@ resource "null_resource" "build_backend" {
       gcloud builds submit ${path.module}/../heatHBack \
         --tag ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.my_repo.repository_id}/heath-backend:latest \
         --project ${var.project_id}
+      
+      gcloud container clusters get-credentials heath-cluster --zone ${var.zone} --project ${var.project_id}
+      kubectl rollout restart deployment/heath-backend
     EOT
   }
 
