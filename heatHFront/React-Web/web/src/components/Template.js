@@ -12,7 +12,6 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import authService from '../services/authService';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import LanguageSwitcher from './LanguageSwitcher';
-import SearchIcon from '@mui/icons-material/Search';
 import MonitorWeightIcon from '@mui/icons-material/MonitorWeight';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -95,15 +94,6 @@ const Template = ({ children }) => {
               startIcon={<HomeIcon />}
             >
               {t('common.home')}
-            </NavButton>
-
-            <NavButton
-              component={Link}
-              to="/search"
-              color={location.pathname === '/search' ? 'secondary' : 'inherit'}
-              startIcon={<SearchIcon />}
-            >
-              {t('common.search')}
             </NavButton>
 
             <NavButton

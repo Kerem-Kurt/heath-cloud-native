@@ -27,7 +27,6 @@ import TermsOfService from './pages/TermsofService';
 import ContactUs from './pages/ContactUs';
 import UserProfile from './pages/UserProfile';
 import LanguageTest from './pages/LanguageTest';
-import SemanticSearch from './pages/SemanticSearch';
 import CalorieTracking from './pages/CalorieTracking';
 
 function App() {
@@ -49,7 +48,6 @@ function App() {
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<HomePage />} />
-            <Route path="/search" element={<SemanticSearch />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/setup" element={<InitialProfileSetup />} />
             <Route path="/profile/edit" element={<EditProfile />} />   

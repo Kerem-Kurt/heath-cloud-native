@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import heatH.heatHBack.model.*;
 import heatH.heatHBack.repository.*;
@@ -25,8 +24,6 @@ public class RecipeService {
     private final FeedRepository feedRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
-    private final OpenAIService openAIService;
-    private final SemanticSearchService semanticSearchService;
     private final CalorieService calorieService;
 
 
@@ -76,13 +73,7 @@ public class RecipeService {
 
         recipe.setUser(user);
 
-        List<Ingredients> ingredients = recipe.getIngredients();
-        String ingredientsText = ingredients.stream()
-                .map(Ingredients::getName)
-                .collect(Collectors.joining(", "));
         Recipe savedRecipe = recipeRepository.save(recipe);
-        double[] emb = openAIService.createEmbedding(savedRecipe.getTitle() + " " + ingredientsText);
-        semanticSearchService.saveEmbeddingForRecipe(savedRecipe.getId(), emb);
         return savedRecipe;
 
     }
@@ -100,7 +91,6 @@ public class RecipeService {
         recipeRepository.deleteById(id);
         likeRepository.deleteAllByFeedIn(feedsToDelete);
         commentRepository.deleteAllByFeedIn(feedsToDelete);
-        semanticSearchService.deleteEmbeddingForRecipe(id);
     }
     public Optional<List<Recipe>> getAllRecipes() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
