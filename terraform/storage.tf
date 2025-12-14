@@ -21,11 +21,18 @@ resource "google_storage_bucket_iam_member" "public_read" {
   member = "allUsers"
 }
 
-# Grant the GKE Service Account permission to write to the bucket
+# Grant the GKE Service Account permission to write to the bucket (Node level)
 resource "google_storage_bucket_iam_member" "gke_sa_storage_admin" {
   bucket = google_storage_bucket.media_bucket.name
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.gke_sa.email}"
+}
+
+# Grant the Backend Service Account permission to write to the bucket (Pod level - Workload Identity)
+resource "google_storage_bucket_iam_member" "backend_sa_storage_admin" {
+  bucket = google_storage_bucket.media_bucket.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.backend_sa.email}"
 }
 
 output "media_bucket_name" {

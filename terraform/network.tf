@@ -59,3 +59,9 @@ resource "google_compute_firewall" "allow_ssh" {
   source_ranges = ["0.0.0.0/0"] # WARNING: Limit this to your IP in production
   target_tags   = ["ssh-enabled"]
 }
+
+# Static External IP for Frontend LoadBalancer
+resource "google_compute_address" "frontend_ip" {
+  name   = "heath-frontend-ip"
+  region = var.region
+}

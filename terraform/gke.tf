@@ -40,7 +40,7 @@ resource "google_container_node_pool" "primary_nodes" {
   }
 
   node_config {
-    machine_type = "e2-medium"
+    machine_type = "e2-standard-2"
     
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
     service_account = google_service_account.gke_sa.email
@@ -57,4 +57,19 @@ resource "google_container_node_pool" "primary_nodes" {
 
     tags = ["gke-node", "heath-gke"]
   }
+}
+
+# --- Workload Identity Setup for Backend ---
+
+# 1. Create Google Service Account for Backend
+resource "google_service_account" "backend_sa" {
+  account_id   = "heath-backend-sa"
+  display_name = "Heath Backend Service Account"
+}
+
+# 2. Allow Kubernetes SA (default/heath-backend-sa) to impersonate Google SA
+resource "google_service_account_iam_member" "backend_sa_impersonation" {
+  service_account_id = google_service_account.backend_sa.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[default/heath-backend-sa]"
 }
