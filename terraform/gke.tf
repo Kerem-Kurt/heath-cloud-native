@@ -1,3 +1,8 @@
+resource "google_service_account" "gke_sa" {
+  account_id   = "heath-gke-node-sa"
+  display_name = "GKE Node Service Account"
+}
+
 resource "google_container_cluster" "primary" {
   name     = "heath-cluster"
   location = var.zone
@@ -18,9 +23,9 @@ resource "google_container_cluster" "primary" {
   }
 
   # Workload Identity allows Kubernetes service accounts to act as Google IAM Service Accounts
-  # workload_identity_config {
-  #   workload_pool = "${var.project_id}.svc.id.goog"
-  # }
+  workload_identity_config {
+    workload_pool = "${var.project_id}.svc.id.goog"
+  }
 }
 
 resource "google_container_node_pool" "primary_nodes" {
@@ -38,6 +43,7 @@ resource "google_container_node_pool" "primary_nodes" {
     machine_type = "e2-medium"
     
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
+    service_account = google_service_account.gke_sa.email
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
