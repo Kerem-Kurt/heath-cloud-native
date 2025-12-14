@@ -9,15 +9,11 @@ resource "null_resource" "build_backend" {
 
   provisioner "local-exec" {
     # 1. Build the backend image
-    # 2.1 Get the credentials for the GKE cluster
-    # 2.2 Restart the deployment (Restart Backend pods, forcing them to pull the latest image)
     command = <<EOT
       gcloud builds submit ${path.module}/../heatHBack \
         --tag ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.my_repo.repository_id}/heath-backend:latest \
-        --project ${var.project_id}
-      
-      gcloud container clusters get-credentials heath-cluster --zone ${var.zone} --project ${var.project_id}
-      kubectl rollout restart deployment/heath-backend
+        --project ${var.project_id} \
+        --machine-type=E2_HIGHCPU_8
     EOT
   }
 
@@ -42,7 +38,8 @@ resource "null_resource" "build_frontend" {
     command = <<EOT
       gcloud builds submit ${path.module}/../heatHFront/React-Web/web \
         --tag ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.my_repo.repository_id}/heath-frontend:latest \
-        --project ${var.project_id}
+        --project ${var.project_id} \
+        --machine-type=E2_HIGHCPU_8
     EOT
   }
 

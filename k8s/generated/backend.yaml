@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: heath-backend-sa
+  annotations:
+    iam.gke.io/gcp-service-account: heath-backend-sa@cmpe-heath-cloud-native.iam.gserviceaccount.com
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heath-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      serviceAccountName: heath-backend-sa
+      containers:
+      - name: backend
+        image: us-central1-docker.pkg.dev/cmpe-heath-cloud-native/heath-repo/heath-backend:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_URL
+          value: "jdbc:postgresql://10.0.0.2:5432/heathdb"
+        - name: DB_USERNAME
+          value: "heathuser"
+        - name: DB_PASSWORD
+          value: "securepassword123"
+        - name: GCP_PROJECT_ID
+          value: "cmpe-heath-cloud-native"
+        - name: GCP_BUCKET
+          value: "cmpe-heath-cloud-native-media"
+        - name: APP_BASE_URL
+          value: "http://136.111.14.184"
+        - name: MAIL_HOST
+          value: "smtp.sendgrid.net"
+        - name: MAIL_PORT
+          value: "587"
+        - name: MAIL_USERNAME
+          value: "apikey"
+        - name: MAIL_PASSWORD
+          value: "placeholder_password"
+        - name: SENDGRID_API_KEY
+          value: "placeholder_key"
+        - name: FATSECRET_CLIENT_ID
+          value: "placeholder_id"
+        - name: FATSECRET_CLIENT_SECRET
+          value: "placeholder_secret"
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: heath-backend
+spec:
+  selector:
+    app: backend
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+

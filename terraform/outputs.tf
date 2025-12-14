@@ -13,6 +13,11 @@ output "vm_public_ip" {
   value       = google_compute_instance.postgres_vm.network_interface[0].access_config[0].nat_ip
 }
 
+output "frontend_external_ip" {
+  description = "External IP address of the Frontend LoadBalancer"
+  value       = google_compute_address.frontend_ip.address
+}
+
 output "cluster_name" {
   description = "GKE Cluster Name"
   value       = google_container_cluster.primary.name
