@@ -4,8 +4,9 @@ resource "google_service_account" "gke_sa" {
 }
 
 resource "google_container_cluster" "primary" {
-  name     = "heath-cluster"
-  location = var.zone
+  name       = "heath-cluster"
+  location   = var.zone
+  depends_on = [google_project_service.container]
 
   # We can't create a cluster with no node pool defined, but we want to only use
   # separately managed node pools. So we create the smallest possible default
@@ -72,4 +73,5 @@ resource "google_service_account_iam_member" "backend_sa_impersonation" {
   service_account_id = google_service_account.backend_sa.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project_id}.svc.id.goog[default/heath-backend-sa]"
+  depends_on         = [google_container_cluster.primary]
 }

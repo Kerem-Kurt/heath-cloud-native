@@ -55,6 +55,13 @@ resource "google_cloudfunctions2_function" "email_function" {
     pubsub_topic   = google_pubsub_topic.email_topic.id
     retry_policy   = "RETRY_POLICY_RETRY"
   }
+
+  depends_on = [
+    google_project_service.cloudfunctions,
+    google_project_service.run,
+    google_project_service.eventarc,
+    google_project_service.pubsub
+  ]
 }
 
 output "pubsub_topic_name" {

@@ -2,6 +2,7 @@
 resource "google_compute_network" "vpc" {
   name                    = var.vpc_name
   auto_create_subnetworks = false
+  depends_on              = [google_project_service.compute]
 }
 
 # Subnet
@@ -62,6 +63,7 @@ resource "google_compute_firewall" "allow_ssh" {
 
 # Static External IP for Frontend LoadBalancer
 resource "google_compute_address" "frontend_ip" {
-  name   = "heath-frontend-ip"
-  region = var.region
+  name       = "heath-frontend-ip"
+  region     = var.region
+  depends_on = [google_project_service.compute]
 }
