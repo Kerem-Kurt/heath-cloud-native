@@ -1,0 +1,6 @@
+Method,Name,Error,Occurrences
+POST,/api/recipe/create [DB Write],"ConnectionResetError(54, 'Connection reset by peer')",3
+GET,/api/recipe/get-all [Complex Read],RemoteDisconnected('Remote end closed connection without response'),14
+GET,/api/recipe/get-all [Complex Read],"ConnectionResetError(54, 'Connection reset by peer')",12
+POST,/api/auth/register,CatchResponseError('Registration failed: '),40
+POST,/api/recipe/create [DB Write],RemoteDisconnected('Remote end closed connection without response'),2
