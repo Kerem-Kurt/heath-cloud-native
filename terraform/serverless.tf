@@ -45,7 +45,8 @@ resource "google_cloudfunctions2_function" "email_function" {
     available_memory   = "256M"
     timeout_seconds    = 60
     environment_variables = {
-      SENDGRID_API_KEY = "placeholder_key" # Replace with var or secret in prod
+      SENDGRID_API_KEY = var.sendgrid_api_key
+      SENDER_EMAIL     = var.sender_email
     }
   }
 

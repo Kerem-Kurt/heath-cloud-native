@@ -63,3 +63,15 @@ variable "db_name" {
   type        = string
   default     = "heathdb"
 }
+
+variable "sendgrid_api_key" {
+  description = "The SendGrid API Key for sending emails"
+  type        = string
+  sensitive   = true
+}
+
+variable "sender_email" {
+  description = "The email address to send from"
+  type        = string
+  default     = "heath352.451@gmail.com"
+}
