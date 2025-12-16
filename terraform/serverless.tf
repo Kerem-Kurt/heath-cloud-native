@@ -2,6 +2,13 @@ resource "google_pubsub_topic" "email_topic" {
   name = "send-email"
 }
 
+# Allow the backend service account to publish to the email topic
+resource "google_pubsub_topic_iam_member" "backend_publisher" {
+  topic  = google_pubsub_topic.email_topic.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${google_service_account.backend_sa.email}"
+}
+
 # Bucket to store the Cloud Function source code
 resource "google_storage_bucket" "function_bucket" {
   name     = "${var.project_id}-function-source"

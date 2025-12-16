@@ -73,5 +73,4 @@ variable "sendgrid_api_key" {
 variable "sender_email" {
   description = "The email address to send from"
   type        = string
-  default     = "heath352.451@gmail.com"
 }
