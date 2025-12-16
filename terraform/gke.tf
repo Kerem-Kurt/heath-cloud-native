@@ -3,6 +3,14 @@ resource "google_service_account" "gke_sa" {
   display_name = "GKE Node Service Account"
 }
 
+# Grant the recommended role for GKE node service accounts
+resource "google_project_iam_member" "gke_sa_default_role" {
+  project = var.project_id
+  role    = "roles/container.defaultNodeServiceAccount"
+  member  = "serviceAccount:${google_service_account.gke_sa.email}"
+}
+
+
 resource "google_container_cluster" "primary" {
   name       = "heath-cluster"
   location   = var.zone

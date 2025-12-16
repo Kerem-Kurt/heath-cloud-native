@@ -10,14 +10,6 @@ resource "local_file" "backend_manifest" {
     db_password      = var.db_password
     media_bucket     = google_storage_bucket.media_bucket.name
     frontend_ip      = google_compute_address.frontend_ip.address
-    cpu_request      = var.frontend_cpu_request
-    memory_request   = var.frontend_memory_request
-    cpu_limit        = var.frontend_cpu_limit
-    memory_limit     = var.frontend_memory_limit
-    hpa_enabled      = var.frontend_hpa_enabled
-    hpa_min_replicas = var.frontend_hpa_min_replicas
-    hpa_max_replicas = var.frontend_hpa_max_replicas
-    hpa_cpu_target   = var.frontend_hpa_cpu_target
     cpu_request      = var.backend_cpu_request
     memory_request   = var.backend_memory_request
     cpu_limit        = var.backend_cpu_limit
@@ -32,10 +24,18 @@ resource "local_file" "backend_manifest" {
 
 resource "local_file" "frontend_manifest" {
   content = templatefile("${path.module}/templates/frontend.yaml.tpl", {
-    region      = var.region
-    project_id  = var.project_id
-    repo_name   = google_artifact_registry_repository.my_repo.repository_id
-    frontend_ip = google_compute_address.frontend_ip.address
+    region           = var.region
+    project_id       = var.project_id
+    repo_name        = google_artifact_registry_repository.my_repo.repository_id
+    frontend_ip      = google_compute_address.frontend_ip.address
+    cpu_request      = var.frontend_cpu_request
+    memory_request   = var.frontend_memory_request
+    cpu_limit        = var.frontend_cpu_limit
+    memory_limit     = var.frontend_memory_limit
+    hpa_enabled      = var.frontend_hpa_enabled
+    hpa_min_replicas = var.frontend_hpa_min_replicas
+    hpa_max_replicas = var.frontend_hpa_max_replicas
+    hpa_cpu_target   = var.frontend_hpa_cpu_target
   })
   filename = "${path.module}/../k8s/generated/frontend.yaml"
 }

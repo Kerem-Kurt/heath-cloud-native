@@ -36,5 +36,5 @@ frontend_hpa_cpu_target   = 70 # percentage
 
 # Cloud Function
 function_max_instances = 10
-function_memory        = "256m" # 0.256 GB
+function_memory        = "512M" # 0.512 GB
 function_timeout       = 60
