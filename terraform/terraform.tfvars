@@ -1,3 +1,5 @@
-project_id = "cmpe-heath-cloud-native"
+project_id = "heath-cloud-native-5"
 region     = "us-central1"
 zone       = "us-central1-a"
+sendgrid_api_key = "SENDGRID_API_KEY"
+sender_email = "SENDGRID_SENDER_EMAIL"

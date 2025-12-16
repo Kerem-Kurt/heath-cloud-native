@@ -48,6 +48,13 @@ public class AuthService implements IAuthService{
         user.setRefreshToken(refreshToken);
         userRepository.save(user);
 
+        // Send welcome email
+        try {
+            mailService.sendEmail(request.username, "Welcome to HeatH!", "Thank you for registering with HeatH. We are excited to have you on board!");
+        } catch (Exception e) {
+            System.err.println("Failed to send welcome email: " + e.getMessage());
+        }
+
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)

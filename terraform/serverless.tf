@@ -2,6 +2,13 @@ resource "google_pubsub_topic" "email_topic" {
   name = "send-email"
 }
 
+# Allow the backend service account to publish to the email topic
+resource "google_pubsub_topic_iam_member" "backend_publisher" {
+  topic  = google_pubsub_topic.email_topic.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${google_service_account.backend_sa.email}"
+}
+
 # Bucket to store the Cloud Function source code
 resource "google_storage_bucket" "function_bucket" {
   name     = "${var.project_id}-function-source"
@@ -45,7 +52,8 @@ resource "google_cloudfunctions2_function" "email_function" {
     available_memory   = "256M"
     timeout_seconds    = 60
     environment_variables = {
-      SENDGRID_API_KEY = "placeholder_key" # Replace with var or secret in prod
+      SENDGRID_API_KEY = var.sendgrid_api_key
+      SENDER_EMAIL     = var.sender_email
     }
   }
 

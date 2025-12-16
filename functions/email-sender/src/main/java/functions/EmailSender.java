@@ -43,7 +43,11 @@ public class EmailSender implements BackgroundFunction<EmailSender.PubSubMessage
     }
 
     private void sendEmail(String to, String subject, String body) throws Exception {
-        Email from = new Email("heath352.451@gmail.com");
+        String senderEmail = System.getenv("SENDER_EMAIL");
+        if (senderEmail == null || senderEmail.isEmpty()) {
+            senderEmail = "heath352.451@gmail.com";
+        }
+        Email from = new Email(senderEmail);
         Email toEmail = new Email(to);
         Content content = new Content("text/html", body);
         Mail mail = new Mail(from, subject, toEmail, content);
