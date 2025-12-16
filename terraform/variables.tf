@@ -74,3 +74,158 @@ variable "sender_email" {
   description = "The email address to send from"
   type        = string
 }
+
+# --- Database Config ---
+variable "db_machine_type" {
+  description = "Machine type for the Database VM"
+  type        = string
+  default     = "e2-medium"
+}
+
+variable "db_disk_size" {
+  description = "Boot disk size for the Database VM in GB"
+  type        = number
+  default     = 20
+}
+
+variable "db_image" {
+  description = "Image for the Database VM"
+  type        = string
+  default     = "ubuntu-os-cloud/ubuntu-2204-lts"
+}
+
+# --- GKE Config ---
+variable "gke_node_machine_type" {
+  description = "Machine type for GKE nodes"
+  type        = string
+  default     = "e2-standard-2"
+}
+
+variable "gke_min_node_count" {
+  description = "Minimum number of nodes in the node pool"
+  type        = number
+  default     = 1
+}
+
+variable "gke_max_node_count" {
+  description = "Maximum number of nodes in the node pool"
+  type        = number
+  default     = 3
+}
+
+# --- Backend Config ---
+variable "backend_cpu_request" {
+  description = "CPU request for backend container"
+  type        = string
+  default     = "250m"
+}
+
+variable "backend_memory_request" {
+  description = "Memory request for backend container"
+  type        = string
+  default     = "512Mi"
+}
+
+variable "backend_cpu_limit" {
+  description = "CPU limit for backend container"
+  type        = string
+  default     = "500m"
+}
+
+variable "backend_memory_limit" {
+  description = "Memory limit for backend container"
+  type        = string
+  default     = "1Gi"
+}
+
+variable "backend_hpa_enabled" {
+  description = "Enable HPA for backend"
+  type        = bool
+  default     = true
+}
+
+variable "backend_hpa_min_replicas" {
+  description = "Min replicas for backend HPA"
+  type        = number
+  default     = 1
+}
+
+variable "backend_hpa_max_replicas" {
+  description = "Max replicas for backend HPA"
+  type        = number
+  default     = 5
+}
+
+variable "backend_hpa_cpu_target" {
+  description = "Target CPU utilization percentage for backend HPA"
+  type        = number
+  default     = 70
+}
+
+# --- Frontend Config ---
+variable "frontend_cpu_request" {
+  description = "CPU request for frontend container"
+  type        = string
+  default     = "250m"
+}
+
+variable "frontend_memory_request" {
+  description = "Memory request for frontend container"
+  type        = string
+  default     = "512Mi"
+}
+
+variable "frontend_cpu_limit" {
+  description = "CPU limit for frontend container"
+  type        = string
+  default     = "500m"
+}
+
+variable "frontend_memory_limit" {
+  description = "Memory limit for frontend container"
+  type        = string
+  default     = "1Gi"
+}
+
+variable "frontend_hpa_enabled" {
+  description = "Enable HPA for frontend"
+  type        = bool
+  default     = true
+}
+
+variable "frontend_hpa_min_replicas" {
+  description = "Min replicas for frontend HPA"
+  type        = number
+  default     = 1
+}
+
+variable "frontend_hpa_max_replicas" {
+  description = "Max replicas for frontend HPA"
+  type        = number
+  default     = 5
+}
+
+variable "frontend_hpa_cpu_target" {
+  description = "Target CPU utilization percentage for frontend HPA"
+  type        = number
+  default     = 70
+}
+
+# --- Cloud Function Config ---
+variable "function_max_instances" {
+  description = "Max instances for the Cloud Function"
+  type        = number
+  default     = 10
+}
+
+variable "function_memory" {
+  description = "Available memory for the Cloud Function"
+  type        = string
+  default     = "256M"
+}
+
+variable "function_timeout" {
+  description = "Timeout in seconds for the Cloud Function"
+  type        = number
+  default     = 60
+}

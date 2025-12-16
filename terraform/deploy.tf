@@ -10,6 +10,22 @@ resource "local_file" "backend_manifest" {
     db_password      = var.db_password
     media_bucket     = google_storage_bucket.media_bucket.name
     frontend_ip      = google_compute_address.frontend_ip.address
+    cpu_request      = var.frontend_cpu_request
+    memory_request   = var.frontend_memory_request
+    cpu_limit        = var.frontend_cpu_limit
+    memory_limit     = var.frontend_memory_limit
+    hpa_enabled      = var.frontend_hpa_enabled
+    hpa_min_replicas = var.frontend_hpa_min_replicas
+    hpa_max_replicas = var.frontend_hpa_max_replicas
+    hpa_cpu_target   = var.frontend_hpa_cpu_target
+    cpu_request      = var.backend_cpu_request
+    memory_request   = var.backend_memory_request
+    cpu_limit        = var.backend_cpu_limit
+    memory_limit     = var.backend_memory_limit
+    hpa_enabled      = var.backend_hpa_enabled
+    hpa_min_replicas = var.backend_hpa_min_replicas
+    hpa_max_replicas = var.backend_hpa_max_replicas
+    hpa_cpu_target   = var.backend_hpa_cpu_target
   })
   filename = "${path.module}/../k8s/generated/backend.yaml"
 }
@@ -27,7 +43,7 @@ resource "local_file" "frontend_manifest" {
 resource "null_resource" "deploy_manifests" {
   triggers = {
     # Redeploy if manifests change or builds update
-    backend_manifest_sha1 = local_file.backend_manifest.content_sha512
+    backend_manifest_sha1  = local_file.backend_manifest.content_sha512
     frontend_manifest_sha1 = local_file.frontend_manifest.content_sha512
     backend_build_id       = null_resource.build_backend.id
     frontend_build_id      = null_resource.build_frontend.id

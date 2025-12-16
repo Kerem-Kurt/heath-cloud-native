@@ -1,12 +1,12 @@
 resource "google_compute_instance" "postgres_vm" {
   name         = "heath-postgres-vm"
-  machine_type = "e2-medium"
+  machine_type = var.db_machine_type
   zone         = var.zone
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2204-lts"
-      size  = 20
+      image = var.db_image
+      size  = var.db_disk_size
     }
   }
 

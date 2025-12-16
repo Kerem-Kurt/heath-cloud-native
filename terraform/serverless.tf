@@ -11,8 +11,8 @@ resource "google_pubsub_topic_iam_member" "backend_publisher" {
 
 # Bucket to store the Cloud Function source code
 resource "google_storage_bucket" "function_bucket" {
-  name     = "${var.project_id}-function-source"
-  location = var.region
+  name                        = "${var.project_id}-function-source"
+  location                    = var.region
   uniform_bucket_level_access = true
 }
 
@@ -48,9 +48,9 @@ resource "google_cloudfunctions2_function" "email_function" {
   }
 
   service_config {
-    max_instance_count = 10
-    available_memory   = "256M"
-    timeout_seconds    = 60
+    max_instance_count = var.function_max_instances
+    available_memory   = var.function_memory
+    timeout_seconds    = var.function_timeout
     environment_variables = {
       SENDGRID_API_KEY = var.sendgrid_api_key
       SENDER_EMAIL     = var.sender_email

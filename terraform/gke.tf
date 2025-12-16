@@ -12,7 +12,7 @@ resource "google_container_cluster" "primary" {
   # separately managed node pools. So we create the smallest possible default
   # node pool and immediately delete it.
   remove_default_node_pool = true
-  initial_node_count       = 1
+  initial_node_count       = var.gke_min_node_count
 
   network    = google_compute_network.vpc.id
   subnetwork = google_compute_subnetwork.subnet.id
@@ -36,22 +36,22 @@ resource "google_container_node_pool" "primary_nodes" {
   node_count = 1
 
   autoscaling {
-    min_node_count = 1
-    max_node_count = 3
+    min_node_count = var.gke_min_node_count
+    max_node_count = var.gke_max_node_count
   }
 
   node_config {
-    machine_type = "e2-standard-2"
-    
+    machine_type = var.gke_node_machine_type
+
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
     service_account = google_service_account.gke_sa.email
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
-    
+
     # We use preemptible nodes to save costs (Optional - good for dev/testing)
     # preemptible  = true
-    
+
     labels = {
       role = "general"
     }
