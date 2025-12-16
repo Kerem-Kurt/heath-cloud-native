@@ -20,7 +20,7 @@ resource "google_container_cluster" "primary" {
   # separately managed node pools. So we create the smallest possible default
   # node pool and immediately delete it.
   remove_default_node_pool = true
-  initial_node_count       = var.gke_min_node_count
+  initial_node_count       = var.gke_node_count
 
   network    = google_compute_network.vpc.id
   subnetwork = google_compute_subnetwork.subnet.id
@@ -41,11 +41,14 @@ resource "google_container_node_pool" "primary_nodes" {
   name       = "heath-node-pool"
   location   = var.zone
   cluster    = google_container_cluster.primary.name
-  node_count = 1
+  node_count = var.gke_node_count
 
-  autoscaling {
-    min_node_count = var.gke_min_node_count
-    max_node_count = var.gke_max_node_count
+  dynamic "autoscaling" {
+    for_each = var.gke_autoscaling_enabled ? [1] : []
+    content {
+      min_node_count = var.gke_min_node_count
+      max_node_count = var.gke_max_node_count
+    }
   }
 
   node_config {

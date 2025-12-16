@@ -11,8 +11,10 @@ db_image        = "ubuntu-os-cloud/ubuntu-2204-lts"
 
 # GKE Cluster
 gke_node_machine_type = "e2-standard-2"
+gke_node_count        = 1
 gke_min_node_count    = 1
 gke_max_node_count    = 1
+gke_autoscaling_enabled = false
 
 # Backend
 backend_cpu_request      = "250m" # 0.25 vCPU

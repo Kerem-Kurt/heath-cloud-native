@@ -101,6 +101,12 @@ variable "gke_node_machine_type" {
   default     = "e2-standard-2"
 }
 
+variable "gke_node_count" {
+  description = "Number of nodes in the node pool (used if autoscaling is disabled or as initial count)"
+  type        = number
+  default     = 1
+}
+
 variable "gke_min_node_count" {
   description = "Minimum number of nodes in the node pool"
   type        = number
@@ -111,6 +117,12 @@ variable "gke_max_node_count" {
   description = "Maximum number of nodes in the node pool"
   type        = number
   default     = 3
+}
+
+variable "gke_autoscaling_enabled" {
+  description = "Enable autoscaling for GKE node pool"
+  type        = bool
+  default     = true
 }
 
 # --- Backend Config ---
