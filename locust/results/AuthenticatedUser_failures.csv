@@ -1,0 +1,11 @@
+Method,Name,Error,Occurrences
+POST,/api/auth/register,"CatchResponseError('Registration failed: <!DOCTYPE html>\n<html>\n<head>\n<title>Error</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>An error occurred.</h1>\n<p>Sorry, the page you are looking for is currently unavailable.<br/>\nPlease try again later.</p>\n<p>If you are the system administrator of this resource then you should check\nthe error log for details.</p>\n<p><em>Faithfully yours, nginx.</em></p>\n</body>\n</html>\n')",861
+POST,/api/recipe/create [DB Write],"ConnectionResetError(54, 'Connection reset by peer')",3747
+POST,/api/recipe/create [DB Write],HTTPError('504 Server Error: Gateway Time-out for url: /api/recipe/create [DB Write]'),49
+GET,/api/recipe/get-all [Complex Read],RemoteDisconnected('Remote end closed connection without response'),8372
+GET,/api/recipe/get-all [Complex Read],"ConnectionResetError(54, 'Connection reset by peer')",12003
+POST,/api/auth/login,"CatchResponseError('Login failed: <!DOCTYPE html>\n<html>\n<head>\n<title>Error</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>An error occurred.</h1>\n<p>Sorry, the page you are looking for is currently unavailable.<br/>\nPlease try again later.</p>\n<p>If you are the system administrator of this resource then you should check\nthe error log for details.</p>\n<p><em>Faithfully yours, nginx.</em></p>\n</body>\n</html>\n')",7
+POST,/api/auth/register,CatchResponseError('Registration failed: '),1006
+POST,/api/auth/login,CatchResponseError('Login failed: '),125
+GET,/api/recipe/get-all [Complex Read],HTTPError('504 Server Error: Gateway Time-out for url: /api/recipe/get-all [Complex Read]'),95
+POST,/api/recipe/create [DB Write],RemoteDisconnected('Remote end closed connection without response'),2987
