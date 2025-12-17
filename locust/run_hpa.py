@@ -20,7 +20,6 @@ def run_hpa_test():
     print("⏱️  Duration: 5 minutes (to allow stabilization)")
     
     os.makedirs(results_dir, exist_ok=True)
-    csv_prefix = os.path.join(results_dir, "hpa_test")
     html_report = os.path.join(results_dir, "hpa_report.html")
     
     # Check if locust is installed and available
@@ -41,10 +40,9 @@ def run_hpa_test():
         USER_CLASS,
         "--host", HOST,
         "--autostart",           # Start the test automatically
-        "--autoquit", "300",     # Stop after 300 seconds (5m)
-        "--users", "1000",         
-        "--spawn-rate", "10",
-        "--csv", csv_prefix,
+        "--autoquit", "120",     # Stop after 300 seconds (5m)
+        "--users", "60",         
+        "--spawn-rate", "5",
         "--html", html_report
     ]
 
