@@ -1,0 +1,117 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>K8s Metrics</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f4f4f4; }
+            .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            h1, h2 { text-align: center; color: #333; }
+            .row { display: flex; gap: 20px; flex-wrap: wrap; }
+            .col { flex: 1; min-width: 45%; }
+            canvas { max-height: 350px; }
+        </style>
+    </head>
+    <body>
+        <h1>Kubernetes Full Stack Scaling Report</h1>
+        
+        <!-- BACKEND SECTION -->
+        <div class="row">
+            <div class="col card">
+                <h2>Backend HPA (Replicas vs Avg CPU)</h2>
+                <canvas id="beHpaChart"></canvas>
+            </div>
+            <div class="col card">
+                <h2>Backend Pod CPU (millicores)</h2>
+                <canvas id="bePodsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- FRONTEND SECTION -->
+        <div class="row">
+            <div class="col card">
+                <h2>Frontend HPA (Replicas vs Avg CPU)</h2>
+                <canvas id="feHpaChart"></canvas>
+            </div>
+            <div class="col card">
+                <h2>Frontend Pod CPU (millicores)</h2>
+                <canvas id="fePodsChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            const rawData = [{"time": "00:03:18", "elapsed": 0, "backend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 1, "pods": {"heath-backend-64f6db4f-pvlmj": 2}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 0}}}, {"time": "00:03:27", "elapsed": 9, "backend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 1, "pods": {"heath-backend-64f6db4f-pvlmj": 2}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 0}}}, {"time": "00:03:37", "elapsed": 19, "backend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 1, "pods": {"heath-backend-64f6db4f-pvlmj": 205}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 0}}}, {"time": "00:03:48", "elapsed": 30, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 175, "pods": {"heath-backend-64f6db4f-pvlmj": 205}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 0}}}, {"time": "00:03:58", "elapsed": 40, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 175, "pods": {"heath-backend-64f6db4f-pvlmj": 205}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 1}}}, {"time": "00:04:08", "elapsed": 50, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 175, "pods": {"heath-backend-64f6db4f-9khdr": 500, "heath-backend-64f6db4f-pvlmj": 311, "heath-backend-64f6db4f-pwr2q": 501}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 1}}}, {"time": "00:04:18", "elapsed": 60, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 144, "pods": {"heath-backend-64f6db4f-9khdr": 500, "heath-backend-64f6db4f-pvlmj": 311, "heath-backend-64f6db4f-pwr2q": 501}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 1}}}, {"time": "00:04:28", "elapsed": 70, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 144, "pods": {"heath-backend-64f6db4f-9khdr": 500, "heath-backend-64f6db4f-pvlmj": 311, "heath-backend-64f6db4f-pwr2q": 501}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}, {"time": "00:04:37", "elapsed": 79, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 144, "pods": {"heath-backend-64f6db4f-9khdr": 501, "heath-backend-64f6db4f-pvlmj": 81, "heath-backend-64f6db4f-pwr2q": 499}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}, {"time": "00:04:48", "elapsed": 90, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 144, "pods": {"heath-backend-64f6db4f-9khdr": 501, "heath-backend-64f6db4f-pvlmj": 81, "heath-backend-64f6db4f-pwr2q": 499}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}, {"time": "00:04:58", "elapsed": 100, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 139, "pods": {"heath-backend-64f6db4f-9khdr": 501, "heath-backend-64f6db4f-pvlmj": 81, "heath-backend-64f6db4f-pwr2q": 499}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}, {"time": "00:05:08", "elapsed": 110, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 139, "pods": {"heath-backend-64f6db4f-9khdr": 378, "heath-backend-64f6db4f-pvlmj": 57, "heath-backend-64f6db4f-pwr2q": 427}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}, {"time": "00:05:18", "elapsed": 120, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 71, "pods": {"heath-backend-64f6db4f-9khdr": 378, "heath-backend-64f6db4f-pvlmj": 57, "heath-backend-64f6db4f-pwr2q": 427}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}, {"time": "00:05:28", "elapsed": 130, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 32, "pods": {"heath-backend-64f6db4f-9khdr": 378, "heath-backend-64f6db4f-pvlmj": 57, "heath-backend-64f6db4f-pwr2q": 427}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}, {"time": "00:05:38", "elapsed": 140, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 32, "pods": {"heath-backend-64f6db4f-9khdr": 85, "heath-backend-64f6db4f-pvlmj": 36, "heath-backend-64f6db4f-pwr2q": 109}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}, {"time": "00:05:48", "elapsed": 150, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 32, "pods": {"heath-backend-64f6db4f-9khdr": 85, "heath-backend-64f6db4f-pvlmj": 36, "heath-backend-64f6db4f-pwr2q": 109}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 1, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}, {"time": "00:05:58", "elapsed": 160, "backend": {"desired_replicas": 3, "ready_replicas": 3, "hpa_cpu": 32, "pods": {"heath-backend-64f6db4f-9khdr": 85, "heath-backend-64f6db4f-pvlmj": 36, "heath-backend-64f6db4f-pwr2q": 109}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 1, "pods": {"heath-frontend-6897bbbbc6-5wmfc": 2}}}];
+            const labels = rawData.map(d => d.time);
+            
+            const beDesired = rawData.map(d => d.backend.desired_replicas);
+            const beReady = rawData.map(d => d.backend.ready_replicas);
+            const beHpaCpu = rawData.map(d => d.backend.hpa_cpu);
+            
+            const feDesired = rawData.map(d => d.frontend.desired_replicas);
+            const feReady = rawData.map(d => d.frontend.ready_replicas);
+            const feHpaCpu = rawData.map(d => d.frontend.hpa_cpu);
+
+            const commonOptions = {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+            };
+
+            const hpaScales = {
+                y: {
+                    type: 'linear', display: true, position: 'left',
+                    title: { display: true, text: 'Pod Count' },
+                    min: 0, suggestedMax: 5,
+                    ticks: { stepSize: 1 }  // INTEGERS ONLY
+                },
+                y1: {
+                    type: 'linear', display: true, position: 'right',
+                    title: { display: true, text: 'HPA CPU Target (%)' },
+                    grid: { drawOnChartArea: false },
+                    min: 0
+                }
+            };
+
+            // --- Backend Charts ---
+            new Chart(document.getElementById('beHpaChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Desired Replicas', data: beDesired, borderColor: '#36A2EB', borderDash: [5, 5], yAxisID: 'y', stepped: true },
+                        { label: 'Ready Replicas', data: beReady, borderColor: '#36A2EB', backgroundColor: 'rgba(54, 162, 235, 0.2)', yAxisID: 'y', stepped: true, fill: true },
+                        { label: 'Avg CPU %', data: beHpaCpu, borderColor: '#FF6384', yAxisID: 'y1', tension: 0.4 }
+                    ]
+                },
+                options: { ...commonOptions, scales: hpaScales }
+            });
+
+            new Chart(document.getElementById('bePodsChart'), {
+                type: 'line',
+                data: { labels: labels, datasets: [{"label": "heath-backend-64f6db4f-9khdr", "data": [0, 0, 0, 0, 0, 500, 500, 500, 501, 501, 501, 378, 378, 378, 85, 85, 85], "borderColor": "#FF6384", "backgroundColor": "#FF6384", "fill": false, "tension": 0.1}, {"label": "heath-backend-64f6db4f-pvlmj", "data": [2, 2, 205, 205, 205, 311, 311, 311, 81, 81, 81, 57, 57, 57, 36, 36, 36], "borderColor": "#36A2EB", "backgroundColor": "#36A2EB", "fill": false, "tension": 0.1}, {"label": "heath-backend-64f6db4f-pwr2q", "data": [0, 0, 0, 0, 0, 501, 501, 501, 499, 499, 499, 427, 427, 427, 109, 109, 109], "borderColor": "#FFCE56", "backgroundColor": "#FFCE56", "fill": false, "tension": 0.1}] },
+                options: { ...commonOptions, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // --- Frontend Charts ---
+            new Chart(document.getElementById('feHpaChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Desired Replicas', data: feDesired, borderColor: '#4BC0C0', borderDash: [5, 5], yAxisID: 'y', stepped: true },
+                        { label: 'Ready Replicas', data: feReady, borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.2)', yAxisID: 'y', stepped: true, fill: true },
+                        { label: 'Avg CPU %', data: feHpaCpu, borderColor: '#FF9F40', yAxisID: 'y1', tension: 0.4 }
+                    ]
+                },
+                options: { ...commonOptions, scales: hpaScales }
+            });
+
+            new Chart(document.getElementById('fePodsChart'), {
+                type: 'line',
+                data: { labels: labels, datasets: [{"label": "heath-frontend-6897bbbbc6-5wmfc", "data": [0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], "borderColor": "#FF6384", "backgroundColor": "#FF6384", "fill": false, "tension": 0.1}] },
+                options: { ...commonOptions, plugins: { legend: { position: 'bottom' } } }
+            });
+        </script>
+    </body>
+    </html>
+    

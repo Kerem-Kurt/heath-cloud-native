@@ -10,13 +10,13 @@ db_disk_size    = 20 # GB
 db_image        = "ubuntu-os-cloud/ubuntu-2204-lts"
 
 # ================== GKE Cluster ==================
-gke_node_machine_type = "e2-standard-2"
+gke_node_machine_type = "e2-standard-4"
 gke_node_count        = 1
 
 # If autoscaling is enabled, the min and max node counts are used.
-gke_autoscaling_enabled = false
+gke_autoscaling_enabled = true
 gke_min_node_count      = 1
-gke_max_node_count      = 1
+gke_max_node_count      = 3
 
 
 # ================== Backend ==================
@@ -26,7 +26,7 @@ backend_memory_request   = "512Mi" # 0.5 GB
 
 # The maximum resources a backend pod is allowed to use.
 # If it tries to use more, it may be restarted.
-backend_cpu_limit        = "500m" # 0.5 vCPU
+backend_cpu_limit        = "500m" # 1 vCPU
 backend_memory_limit     = "1Gi" # 1 GB
 
 # If HPA is enabled, the min and max replicas are used.
@@ -45,7 +45,7 @@ frontend_cpu_limit        = "500m" # 0.5 vCPU
 frontend_memory_limit     = "1Gi" # 1 GB
 
 # If HPA is enabled, the min and max replicas are used.
-frontend_hpa_enabled      = false
+frontend_hpa_enabled      = true
 frontend_hpa_min_replicas = 1
 frontend_hpa_max_replicas = 5
 frontend_hpa_cpu_target   = 70 # percentage

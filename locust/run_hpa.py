@@ -74,7 +74,34 @@ def get_hpa_metrics(hpa_name):
                         hpa_cpu = metric['resource']['current']['averageUtilization']
     except:
         pass
+
+    # Bug Fix: If replicas is 0, verify with direct pod count
+    if current_replicas == 0:
+        app_name = hpa_name.replace("-hpa", "").replace("heath-", "") # e.g. 'frontend' or 'backend'
+        try:
+            pod_count_cmd = ["kubectl", "get", "pods", "-l", f"app={app_name}", "--no-headers"]
+            output = subprocess.check_output(pod_count_cmd, stderr=subprocess.DEVNULL).decode('utf-8').strip()
+            if output:
+                current_replicas = len([line for line in output.split('\n') if line.strip()])
+        except:
+            pass
+
     return current_replicas, hpa_cpu
+
+def get_deployment_metrics(deployment_name):
+    """
+    Gets Desired vs Ready replicas from Deployment.
+    Returns: (desired, ready)
+    """
+    try:
+        cmd = ["kubectl", "get", "deployment", deployment_name, "-o", "json"]
+        out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode('utf-8')
+        data = json.loads(out)
+        desired = data['status'].get('replicas', 0) # Total pods created
+        ready = data['status'].get('readyReplicas', 0) # Pods actually running & ready
+        return desired, ready
+    except:
+        return 0, 0
 
 def monitor_k8s_metrics(results_dir):
     """
@@ -89,12 +116,16 @@ def monitor_k8s_metrics(results_dir):
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
         elapsed = int(time.time() - start_time)
         
-        # Backend Metrics
-        be_replicas, be_hpa_cpu = get_hpa_metrics("heath-backend-hpa")
-        be_pods = get_pod_metrics("backend")
+        # HPA Metrics (CPU target)
+        _, be_hpa_cpu = get_hpa_metrics("heath-backend-hpa")
+        _, fe_hpa_cpu = get_hpa_metrics("heath-frontend-hpa")
 
-        # Frontend Metrics (Assuming HPA name is heath-frontend-hpa and label app=frontend)
-        fe_replicas, fe_hpa_cpu = get_hpa_metrics("heath-frontend-hpa")
+        # Deployment Metrics (True Replica Counts)
+        be_desired, be_ready = get_deployment_metrics("heath-backend")
+        fe_desired, fe_ready = get_deployment_metrics("heath-frontend")
+
+        # Pod CPU Metrics
+        be_pods = get_pod_metrics("backend")
         fe_pods = get_pod_metrics("frontend")
 
         # Store data point
@@ -102,12 +133,14 @@ def monitor_k8s_metrics(results_dir):
             "time": timestamp,
             "elapsed": elapsed,
             "backend": {
-                "replicas": be_replicas,
+                "desired_replicas": be_desired,
+                "ready_replicas": be_ready,
                 "hpa_cpu": be_hpa_cpu,
                 "pods": be_pods
             },
             "frontend": {
-                "replicas": fe_replicas,
+                "desired_replicas": fe_desired,
+                "ready_replicas": fe_ready,
                 "hpa_cpu": fe_hpa_cpu,
                 "pods": fe_pods
             }
@@ -197,10 +230,12 @@ def generate_k8s_report(results_dir):
             const rawData = {json.dumps(metrics_data)};
             const labels = rawData.map(d => d.time);
             
-            const beReplicas = rawData.map(d => d.backend.replicas);
+            const beDesired = rawData.map(d => d.backend.desired_replicas);
+            const beReady = rawData.map(d => d.backend.ready_replicas);
             const beHpaCpu = rawData.map(d => d.backend.hpa_cpu);
             
-            const feReplicas = rawData.map(d => d.frontend.replicas);
+            const feDesired = rawData.map(d => d.frontend.desired_replicas);
+            const feReady = rawData.map(d => d.frontend.ready_replicas);
             const feHpaCpu = rawData.map(d => d.frontend.hpa_cpu);
 
             const commonOptions = {{
@@ -229,7 +264,8 @@ def generate_k8s_report(results_dir):
                 data: {{
                     labels: labels,
                     datasets: [
-                        {{ label: 'Replicas', data: beReplicas, borderColor: '#36A2EB', backgroundColor: 'rgba(54, 162, 235, 0.1)', yAxisID: 'y', stepped: true, fill: true }},
+                        {{ label: 'Desired Replicas', data: beDesired, borderColor: '#36A2EB', borderDash: [5, 5], yAxisID: 'y', stepped: true }},
+                        {{ label: 'Ready Replicas', data: beReady, borderColor: '#36A2EB', backgroundColor: 'rgba(54, 162, 235, 0.2)', yAxisID: 'y', stepped: true, fill: true }},
                         {{ label: 'Avg CPU %', data: beHpaCpu, borderColor: '#FF6384', yAxisID: 'y1', tension: 0.4 }}
                     ]
                 }},
@@ -248,7 +284,8 @@ def generate_k8s_report(results_dir):
                 data: {{
                     labels: labels,
                     datasets: [
-                        {{ label: 'Replicas', data: feReplicas, borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', yAxisID: 'y', stepped: true, fill: true }},
+                        {{ label: 'Desired Replicas', data: feDesired, borderColor: '#4BC0C0', borderDash: [5, 5], yAxisID: 'y', stepped: true }},
+                        {{ label: 'Ready Replicas', data: feReady, borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.2)', yAxisID: 'y', stepped: true, fill: true }},
                         {{ label: 'Avg CPU %', data: feHpaCpu, borderColor: '#FF9F40', yAxisID: 'y1', tension: 0.4 }}
                     ]
                 }},
