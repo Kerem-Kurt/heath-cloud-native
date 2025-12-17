@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: us-central1-docker.pkg.dev/cmpe-heath-cloud-native/heath-repo/heath-frontend:latest
+        image: us-central1-docker.pkg.dev/heath-cloud-native-kerem-1/heath-repo/heath-frontend:latest
         ports:
         - containerPort: 80
         env:
@@ -39,5 +39,5 @@ spec:
   - port: 80
     targetPort: 80
   type: LoadBalancer
-  loadBalancerIP: 136.111.14.184
+  loadBalancerIP: 136.114.153.163
 

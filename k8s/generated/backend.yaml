@@ -3,7 +3,7 @@ kind: ServiceAccount
 metadata:
   name: heath-backend-sa
   annotations:
-    iam.gke.io/gcp-service-account: heath-backend-sa@cmpe-heath-cloud-native.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: heath-backend-sa@heath-cloud-native-kerem-1.iam.gserviceaccount.com
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -22,7 +22,7 @@ spec:
       serviceAccountName: heath-backend-sa
       containers:
       - name: backend
-        image: us-central1-docker.pkg.dev/cmpe-heath-cloud-native/heath-repo/heath-backend:latest
+        image: us-central1-docker.pkg.dev/heath-cloud-native-kerem-1/heath-repo/heath-backend:latest
         ports:
         - containerPort: 8080
         env:
@@ -33,11 +33,11 @@ spec:
         - name: DB_PASSWORD
           value: "securepassword123"
         - name: GCP_PROJECT_ID
-          value: "cmpe-heath-cloud-native"
+          value: "heath-cloud-native-kerem-1"
         - name: GCP_BUCKET
-          value: "cmpe-heath-cloud-native-media"
+          value: "heath-cloud-native-kerem-1-media"
         - name: APP_BASE_URL
-          value: "http://136.111.14.184"
+          value: "http://136.114.153.163"
         - name: MAIL_HOST
           value: "smtp.sendgrid.net"
         - name: MAIL_PORT
@@ -71,4 +71,24 @@ spec:
   - port: 80
     targetPort: 8080
   type: ClusterIP
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: heath-backend-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: heath-backend
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
 

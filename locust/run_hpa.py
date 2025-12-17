@@ -5,7 +5,7 @@ import webbrowser
 import sys
 
 # Configuration
-HOST = "http://34.31.212.244" # Ensure this matches your Ingress IP
+HOST = "http://136.114.153.163/" # Ensure this matches your Ingress IP
 OUTPUT_DIR = "results_hpa" # Relative to script location
 USER_CLASS = "AuthenticatedUser" # High CPU usage profile
 

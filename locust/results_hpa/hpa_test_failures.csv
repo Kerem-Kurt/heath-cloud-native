@@ -1,11 +1,8 @@
 Method,Name,Error,Occurrences
-POST,/api/interest-form/submit,"CatchResponseError('Interest Form submission failed: <!DOCTYPE html>\n<html>\n<head>\n<title>Error</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>An error occurred.</h1>\n<p>Sorry, the page you are looking for is currently unavailable.<br/>\nPlease try again later.</p>\n<p>If you are the system administrator of this resource then you should check\nthe error log for details.</p>\n<p><em>Faithfully yours, nginx.</em></p>\n</body>\n</html>\n')",12
-GET,/api/recipe/get-all [Setup],CatchResponseError('Failed to get recipe list: 403'),10945
-GET,/api/recipe/get-all [Complex Read],CatchResponseError('Failed to get recipes: 504'),3
-GET,/api/recipe/get-all [Setup],CatchResponseError('Failed to get recipe list: 504'),3
-POST,/api/auth/register,CatchResponseError('Registration failed: '),364
-POST,/api/recipe/create [DB Write],CatchResponseError('Failed to create recipe: 403'),5491
-POST,/api/auth/login,CatchResponseError('Login failed: '),115
-POST,/api/interest-form/submit,CatchResponseError('Interest Form submission failed: '),69
-GET,/api/recipe/get-all [Complex Read],CatchResponseError('Failed to get recipes: 403'),16623
-POST,/api/recipe/create [DB Write],CatchResponseError('Failed to create recipe: 504'),3
+POST,/api/auth/register,"CatchResponseError('Registration failed: <!DOCTYPE html>\n<html>\n<head>\n<title>Error</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>An error occurred.</h1>\n<p>Sorry, the page you are looking for is currently unavailable.<br/>\nPlease try again later.</p>\n<p>If you are the system administrator of this resource then you should check\nthe error log for details.</p>\n<p><em>Faithfully yours, nginx.</em></p>\n</body>\n</html>\n')",710
+GET,/api/recipe/get-all [Complex Read],CatchResponseError('Failed to get recipes: 502'),2178
+GET,/api/recipe/get-all [Setup],CatchResponseError('Failed to get recipe list: 403'),1940
+POST,/api/recipe/create [DB Write],CatchResponseError('Failed to create recipe: 502'),691
+GET,/api/recipe/get-all [Setup],CatchResponseError('Failed to get recipe list: 502'),1487
+POST,/api/recipe/create [DB Write],CatchResponseError('Failed to create recipe: 403'),948
+GET,/api/recipe/get-all [Complex Read],CatchResponseError('Failed to get recipes: 403'),2808
