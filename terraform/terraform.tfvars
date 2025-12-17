@@ -32,7 +32,7 @@ backend_memory_limit     = "1Gi" # 1 GB
 # If HPA is enabled, the min and max replicas are used.
 backend_hpa_enabled      = true
 backend_hpa_min_replicas = 1
-backend_hpa_max_replicas = 5
+backend_hpa_max_replicas = 3
 backend_hpa_cpu_target   = 70 # percentage
 
 # ================== Frontend ==================
