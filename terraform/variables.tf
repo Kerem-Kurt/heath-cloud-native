@@ -186,6 +186,12 @@ variable "backend_hpa_cpu_target" {
   default     = 70
 }
 
+variable "backend_db_pool_size" {
+  description = "Maximum database connection pool size per backend pod"
+  type        = number
+  default     = 10
+}
+
 # --- Frontend Config ---
 variable "frontend_cpu_request" {
   description = "CPU request for frontend container"

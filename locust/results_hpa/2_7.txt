@@ -1,8 +1,8 @@
-project_id       = "heath-cloud-native-kerem-1"
-region           = "us-central1"
-zone             = "us-central1-a"
-sendgrid_api_key = "SENDGRID_API_KEY"
-sender_email     = "SENDGRID_SENDER_EMAIL"
+# REDUCED THE DB CORES
+# 17.46 kubectl rollout restart deployment/heath-backend  (To balance the load better)
+
+USERS = 2000
+SPAWN_RATE = 1
 
 # ================== Database ==================
 db_machine_type = "e2-custom-6-24576" # 6 vCPUs, 24 GB RAM
@@ -24,7 +24,7 @@ gke_disk_type           = "pd-standard"
 
 # ================== Backend ==================
 # The resources guaranteed to each backend pod.
-backend_cpu_request      = "500m" 
+backend_cpu_request      = "250m"    ######## UPDATED MID TEST
 backend_memory_request   = "512Mi" # 0.5 GB
 
 # The maximum resources a backend pod is allowed to use.
@@ -38,24 +38,3 @@ backend_hpa_min_replicas = 1
 backend_hpa_max_replicas = 9
 backend_hpa_cpu_target   = 70 # percentage
 backend_db_pool_size     = 50
-
-# ================== Frontend ==================
-# The resources guaranteed to each frontend pod.
-frontend_cpu_request      = "250m" # 0.25 vCPU
-frontend_memory_request   = "512Mi" # 0.5 GB
-
-# The maximum resources a frontend pod is allowed to use.
-# If it tries to use more, it may be restarted.
-frontend_cpu_limit        = "500m" # 0.5 vCPU
-frontend_memory_limit     = "1Gi" # 1 GB
-
-# If HPA is enabled, the min and max replicas are used.
-frontend_hpa_enabled      = true
-frontend_hpa_min_replicas = 1
-frontend_hpa_max_replicas = 5
-frontend_hpa_cpu_target   = 70 # percentage
-
-# ================== Cloud Function ==================
-function_max_instances = 10
-function_memory        = "512M" # 0.512 GB
-function_timeout       = 60

@@ -18,6 +18,7 @@ resource "local_file" "backend_manifest" {
     hpa_min_replicas = var.backend_hpa_min_replicas
     hpa_max_replicas = var.backend_hpa_max_replicas
     hpa_cpu_target   = var.backend_hpa_cpu_target
+    db_pool_size     = var.backend_db_pool_size
   })
   filename = "${path.module}/../k8s/generated/backend.yaml"
 }

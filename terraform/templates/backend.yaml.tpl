@@ -20,6 +20,13 @@ spec:
         app: backend
     spec:
       serviceAccountName: heath-backend-sa
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: backend
       containers:
       - name: backend
         image: ${region}-docker.pkg.dev/${project_id}/${repo_name}/heath-backend:latest
@@ -52,6 +59,8 @@ spec:
           value: "placeholder_id"
         - name: FATSECRET_CLIENT_SECRET
           value: "placeholder_secret"
+        - name: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+          value: "${db_pool_size}"
         resources:
           requests:
             cpu: "${cpu_request}"

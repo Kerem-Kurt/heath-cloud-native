@@ -21,6 +21,7 @@ SPAWN_RATE = 1
 
 # Global list to store metrics
 metrics_data = []
+db_pool_data = []  # DB Connection Pool metrics
 monitoring_active = True
 
 def get_pod_metrics(app_label):
@@ -123,12 +124,84 @@ def get_node_metrics():
         pass
     return total, ready
 
+def fetch_recent_db_pool_logs(since_seconds=10):
+    """
+    Fetches recent backend logs and parses HikariCP connection pool stats.
+    Same approach as visualize_db_bottleneck.py but for recent logs only.
+    Returns: list of parsed metrics dicts
+    """
+    try:
+        # Fetch recent logs (similar to visualize_db_bottleneck.py)
+        cmd = ["kubectl", "logs", "-l", "app=backend", f"--since={since_seconds}s", "--timestamps"]
+        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode('utf-8', errors='ignore')
+        
+        data_points = []
+        ts_pattern = re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})')
+        
+        for line in output.split('\n'):
+            # Same parsing logic as visualize_db_bottleneck.py
+            if "HikariPool" in line and "Connection is not available" in line and "waiting=" in line:
+                ts_match = ts_pattern.search(line)
+                if not ts_match:
+                    continue
+                
+                try:
+                    # Extract metrics: (total=10, active=10, idle=0, waiting=173)
+                    stats_part = line[line.rfind('(')+1 : line.rfind(')')]
+                    parts = [p.strip() for p in stats_part.split(',')]
+                    metrics = {}
+                    for p in parts:
+                        if '=' in p:
+                            k, v = p.split('=')
+                            metrics[k] = int(v)
+                    
+                    data_points.append({
+                        "total": metrics.get('total', 10),
+                        "active": metrics.get('active', 0),
+                        "idle": metrics.get('idle', 0),
+                        "waiting": metrics.get('waiting', 0)
+                    })
+                except:
+                    pass
+        
+        return data_points
+    except Exception as e:
+        return []
+
+def poll_db_pool_metrics():
+    """
+    Polls DB pool metrics by fetching recent logs (same approach as visualize_db_bottleneck.py).
+    Returns: dict with total, active, idle, waiting
+    """
+    # Fetch recent logs and parse them
+    recent_data = fetch_recent_db_pool_logs(since_seconds=POLL_INTERVAL + 2)
+    
+    if recent_data:
+        # Aggregate: use max waiting from recent period (captures spikes)
+        max_waiting = max(d['waiting'] for d in recent_data)
+        max_active = max(d['active'] for d in recent_data)
+        # Use the last data point but with max waiting
+        result = recent_data[-1].copy()
+        result['waiting'] = max_waiting
+        result['active'] = max_active
+        return result
+    
+    # No exhaustion events in logs - pool is healthy
+    # Return zeros to indicate no bottleneck
+    return {
+        "total": 10,  # Default HikariCP pool size
+        "active": 0,
+        "idle": 10,
+        "waiting": 0
+    }
+
 def monitor_k8s_metrics(results_dir):
     """
     Background thread function to poll Kubernetes HPA and Pod metrics for both Backend and Frontend.
+    Also polls DB connection pool metrics at each interval by fetching recent logs.
     """
-    global monitoring_active
-    print("   👀 Kubernetes Monitoring Started (Backend & Frontend)...")
+    global monitoring_active, db_pool_data
+    print("   👀 Kubernetes Monitoring Started (Backend, Frontend & DB Pool)...")
     
     start_time = time.time()
     
@@ -150,6 +223,17 @@ def monitor_k8s_metrics(results_dir):
 
         # Node Metrics
         total_nodes, ready_nodes = get_node_metrics()
+        
+        # DB Connection Pool Metrics (polled at same interval)
+        db_metrics = poll_db_pool_metrics()
+        db_pool_data.append({
+            "time": timestamp,
+            "elapsed": elapsed,
+            "total": db_metrics.get('total', 10),
+            "active": db_metrics.get('active', 0),
+            "idle": db_metrics.get('idle', 0),
+            "waiting": db_metrics.get('waiting', 0)
+        })
 
         # Store data point
         metrics_data.append({
@@ -177,11 +261,13 @@ def monitor_k8s_metrics(results_dir):
 
 def generate_k8s_report(results_dir):
     """
-    Generates HTML report with 4 charts:
+    Generates HTML report with charts:
     1. Backend HPA
     2. Backend Pods
     3. Frontend HPA
     4. Frontend Pods
+    5. Nodes
+    6. DB Connection Pool (if data available)
     """
     
     # helper to extract pod datasets
@@ -210,12 +296,181 @@ def generate_k8s_report(results_dir):
 
     be_pod_datasets = get_pod_datasets('backend')
     fe_pod_datasets = get_pod_datasets('frontend')
+    
+    # Prepare DB Pool data (now collected at regular intervals)
+    db_pool_labels = [d['time'] for d in db_pool_data]
+    db_pool_total = [d['total'] for d in db_pool_data]
+    db_pool_active = [d['active'] for d in db_pool_data]
+    db_pool_idle = [d['idle'] for d in db_pool_data]
+    db_pool_waiting = [d['waiting'] for d in db_pool_data]
+    max_waiting = max(db_pool_waiting) if db_pool_waiting else 0
+    max_active = max(db_pool_active) if db_pool_active else 0
+    total_exhaustion_events = sum(1 for w in db_pool_waiting if w > 0)
+    
+    # Calculate pool utilization percentage for better visualization
+    db_pool_utilization = []
+    for i in range(len(db_pool_active)):
+        total = db_pool_total[i] if db_pool_total[i] > 0 else 10
+        util = (db_pool_active[i] / total) * 100
+        db_pool_utilization.append(round(util, 1))
+    
+    avg_utilization = round(sum(db_pool_utilization) / len(db_pool_utilization), 1) if db_pool_utilization else 0
+    max_utilization = max(db_pool_utilization) if db_pool_utilization else 0
+    pool_size = db_pool_total[0] if db_pool_total else 10
+    
+    # DB Pool section HTML - show status based on whether exhaustion occurred
+    has_exhaustion = max_waiting > 0 or total_exhaustion_events > 0
+    
+    # Determine status color based on utilization
+    if has_exhaustion:
+        status_bg = "#fee"
+        status_border = "#e74c3c"
+        status_icon = "⚠️"
+        status_text = "Pool Exhaustion Detected!"
+    elif max_utilization > 90:
+        status_bg = "#fff3e0"
+        status_border = "#f39c12"
+        status_icon = "⚡"
+        status_text = "High Pool Utilization"
+    else:
+        status_bg = "#efe"
+        status_border = "#2ecc71"
+        status_icon = "✅"
+        status_text = "Pool Healthy"
+    
+    db_pool_section = f"""
+    <!-- DB CONNECTION POOL SECTION -->
+    <div class="row">
+        <div class="col card" style="min-width: 100%;">
+            <h2>🗄️ Database Connection Pool</h2>
+            <div class="stat-box" style="background: {status_bg}; border: 2px solid {status_border}; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <span style="font-size: 1.4em;">{status_icon} {status_text}</span><br><br>
+                <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold; color: #3498db;">{pool_size}</div>
+                        <div style="font-size: 0.9em; color: #666;">Pool Size</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold; color: {'#e74c3c' if max_utilization > 90 else '#f39c12' if max_utilization > 70 else '#2ecc71'};">{max_utilization}%</div>
+                        <div style="font-size: 0.9em; color: #666;">Max Utilization</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold; color: #9b59b6;">{avg_utilization}%</div>
+                        <div style="font-size: 0.9em; color: #666;">Avg Utilization</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold; color: {'#e74c3c' if max_waiting > 0 else '#2ecc71'};">{max_waiting}</div>
+                        <div style="font-size: 0.9em; color: #666;">Max Queue Wait</div>
+                    </div>
+                </div>
+            </div>
+            <canvas id="dbPoolChart"></canvas>
+        </div>
+    </div>
+    """
+    
+    db_pool_script = f"""
+        // --- DB Connection Pool Chart ---
+        const dbPoolLabels = {json.dumps(db_pool_labels)};
+        const dbPoolTotal = {json.dumps(db_pool_total)};
+        const dbPoolActive = {json.dumps(db_pool_active)};
+        const dbPoolIdle = {json.dumps(db_pool_idle)};
+        const dbPoolWaiting = {json.dumps(db_pool_waiting)};
+        const dbPoolUtilization = {json.dumps(db_pool_utilization)};
+        
+        new Chart(document.getElementById('dbPoolChart'), {{
+            type: 'bar',
+            data: {{
+                labels: dbPoolLabels,
+                datasets: [
+                    {{
+                        label: 'Pool Utilization %',
+                        data: dbPoolUtilization,
+                        backgroundColor: dbPoolUtilization.map(v => 
+                            v > 90 ? 'rgba(231, 76, 60, 0.8)' : 
+                            v > 70 ? 'rgba(243, 156, 18, 0.8)' : 
+                            'rgba(46, 204, 113, 0.8)'
+                        ),
+                        borderColor: dbPoolUtilization.map(v => 
+                            v > 90 ? '#c0392b' : 
+                            v > 70 ? '#d68910' : 
+                            '#27ae60'
+                        ),
+                        borderWidth: 1,
+                        yAxisID: 'y',
+                        order: 2
+                    }},
+                    {{
+                        label: 'Requests Waiting (Queue)',
+                        data: dbPoolWaiting,
+                        type: 'line',
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#e74c3c',
+                        yAxisID: 'y1',
+                        order: 1
+                    }}
+                ]
+            }},
+            options: {{
+                responsive: true,
+                interaction: {{ mode: 'index', intersect: false }},
+                scales: {{
+                    y: {{
+                        beginAtZero: true,
+                        max: 100,
+                        position: 'left',
+                        title: {{ display: true, text: 'Pool Utilization (%)' }},
+                        ticks: {{
+                            callback: function(value) {{ return value + '%'; }}
+                        }}
+                    }},
+                    y1: {{
+                        beginAtZero: true,
+                        position: 'right',
+                        title: {{ display: true, text: 'Waiting Requests' }},
+                        grid: {{ drawOnChartArea: false }}
+                    }},
+                    x: {{
+                        title: {{ display: true, text: 'Time' }},
+                        ticks: {{ maxTicksLimit: 20 }}
+                    }}
+                }},
+                plugins: {{
+                    title: {{
+                        display: true,
+                        text: 'DB Connection Pool: Utilization & Queue (Red bars = >90% | Orange = >70% | Green = Healthy)'
+                    }},
+                    legend: {{
+                        position: 'bottom'
+                    }},
+                    tooltip: {{
+                        callbacks: {{
+                            afterBody: function(context) {{
+                                const idx = context[0].dataIndex;
+                                return [
+                                    '',
+                                    'Pool Size: ' + dbPoolTotal[idx],
+                                    'Active: ' + dbPoolActive[idx],
+                                    'Idle: ' + dbPoolIdle[idx]
+                                ];
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+        }});
+    """
 
     html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <title>K8s Metrics</title>
+        <title>K8s Full Stack Metrics Report</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
             body {{ font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f4f4f4; }}
@@ -224,10 +479,43 @@ def generate_k8s_report(results_dir):
             .row {{ display: flex; gap: 20px; flex-wrap: wrap; }}
             .col {{ flex: 1; min-width: 45%; }}
             canvas {{ max-height: 350px; }}
+            .stat-box {{ text-align: center; margin-top: 15px; font-size: 1.1em; color: #666; }}
+            .highlight {{ color: #e74c3c; font-weight: bold; font-size: 1.3em; }}
+            .summary {{ background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+            .summary h2 {{ margin-top: 0; }}
+            .summary-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }}
+            .summary-item {{ text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px; }}
+            .summary-item .value {{ font-size: 2em; font-weight: bold; color: #333; }}
+            .summary-item .label {{ font-size: 0.9em; color: #666; }}
         </style>
     </head>
     <body>
-        <h1>Kubernetes Full Stack Scaling Report</h1>
+        <h1>🚀 Kubernetes Full Stack Scaling Report</h1>
+        
+        <!-- SUMMARY SECTION -->
+        <div class="summary">
+            <h2>📊 Test Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="value">{len(metrics_data) * POLL_INTERVAL}s</div>
+                    <div class="label">Test Duration</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{max([d['backend']['ready_replicas'] for d in metrics_data]) if metrics_data else 0}</div>
+                    <div class="label">Max Backend Pods</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{max([d['nodes']['ready'] for d in metrics_data]) if metrics_data else 0}</div>
+                    <div class="label">Max Nodes</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value" style="color: {'#e74c3c' if max_waiting > 0 else '#2ecc71'};">{max_waiting}</div>
+                    <div class="label">Max DB Queue Wait</div>
+                </div>
+            </div>
+        </div>
+        
+        {db_pool_section}
         
         <!-- BACKEND SECTION -->
         <div class="row">
@@ -256,7 +544,7 @@ def generate_k8s_report(results_dir):
         <!-- NODES SECTION -->
         <div class="row">
             <div class="col card">
-                <h2>Data Nodes (Cluster Scaling)</h2>
+                <h2>Cluster Nodes (Autoscaling)</h2>
                 <canvas id="nodeChart"></canvas>
             </div>
         </div>
@@ -286,7 +574,7 @@ def generate_k8s_report(results_dir):
                     type: 'linear', display: true, position: 'left',
                     title: {{ display: true, text: 'Pod Count' }},
                     min: 0, suggestedMax: 5,
-                    ticks: {{ stepSize: 1 }}  // INTEGERS ONLY
+                    ticks: {{ stepSize: 1 }}
                 }},
                 y1: {{
                     type: 'linear', display: true, position: 'right',
@@ -357,6 +645,8 @@ def generate_k8s_report(results_dir):
                     }}
                 }}
             }});
+            
+            {db_pool_script}
         </script>
     </body>
     </html>
@@ -367,13 +657,15 @@ def generate_k8s_report(results_dir):
         f.write(html_content)
     
     print(f"📊 Kubernetes Metrics Report generated: {report_path}")
-    # try:
-    #     webbrowser.open(f"file://{report_path}")
-    # except:
-    #     pass
+    print(f"   📈 DB Pool events captured: {len(db_pool_data)}")
 
 def run_hpa_test():
-    global monitoring_active
+    global monitoring_active, metrics_data, db_pool_data
+    
+    # Reset global data for fresh test
+    metrics_data = []
+    db_pool_data = []
+    monitoring_active = True
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     locustfile_path = os.path.join(script_dir, "locustfile.py")
@@ -382,6 +674,7 @@ def run_hpa_test():
     print(f"\n🚀 Starting HPA Test: {USER_CLASS}")
     print("🎯 Target: Trigger CPU > 50% to scale from 1 -> N replicas")
     print(f"⏱️  Duration: {TEST_DURATION} seconds")
+    print(f"👥 Users: {USERS} | Spawn Rate: {SPAWN_RATE}/s")
     
     os.makedirs(results_dir, exist_ok=True)
     html_report = os.path.join(results_dir, "locust_report.html")
@@ -396,7 +689,7 @@ def run_hpa_test():
     except Exception:
         locust_executable = [sys.executable, "-m", "locust"]
 
-    # Start Monitoring
+    # Start K8s Metrics Monitoring (also polls DB pool metrics)
     monitor_thread = threading.Thread(target=monitor_k8s_metrics, args=(results_dir,))
     monitor_thread.daemon = True 
     monitor_thread.start()
@@ -415,10 +708,7 @@ def run_hpa_test():
     try:
         print("   ...Starting Locust Web UI...")
         print("   📊 Live Charts available at: http://localhost:8089")
-        #try:
-        #    webbrowser.open("http://localhost:8089")
-        #except:
-        #    pass
+        print("   🗄️  DB pool metrics polled every", POLL_INTERVAL, "seconds...")
 
         subprocess.run(cmd, check=True)
         print("\n✅ Test Complete.")
@@ -430,8 +720,10 @@ def run_hpa_test():
         print("\n🛑 Test stopped by user.")
     finally:
         monitoring_active = False
-        monitor_thread.join() 
+        print("\n   ⏳ Finalizing reports...")
+        monitor_thread.join(timeout=5)
         generate_k8s_report(results_dir)
+        print(f"\n📁 All reports saved to: {results_dir}")
 
 if __name__ == "__main__":
     run_hpa_test()
