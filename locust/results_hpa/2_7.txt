@@ -1,5 +1,6 @@
 # REDUCED THE DB CORES
 # 17.46 kubectl rollout restart deployment/heath-backend  (To balance the load better)
+# 17.52 kubectl set resources deployment/heath-backend --requests=cpu=500m 
 
 USERS = 2000
 SPAWN_RATE = 1
@@ -24,7 +25,7 @@ gke_disk_type           = "pd-standard"
 
 # ================== Backend ==================
 # The resources guaranteed to each backend pod.
-backend_cpu_request      = "250m"    ######## UPDATED MID TEST
+backend_cpu_request      = "250m"    ######## UPDATED MID TEST to 500m 
 backend_memory_request   = "512Mi" # 0.5 GB
 
 # The maximum resources a backend pod is allowed to use.
