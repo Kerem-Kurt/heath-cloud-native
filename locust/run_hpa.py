@@ -10,7 +10,7 @@ import shutil
 import re
 
 # Configuration
-HOST = "http://34.31.212.244" # Ensure this matches your Ingress IP
+HOST = "http://136.114.153.163/" # Ensure this matches your Ingress IP
 OUTPUT_DIR = "results_hpa" # Relative to script location
 USER_CLASS = "AuthenticatedUser" # High CPU usage profile
 POLL_INTERVAL = 5 # seconds
@@ -103,6 +103,26 @@ def get_deployment_metrics(deployment_name):
     except:
         return 0, 0
 
+def get_node_metrics():
+    """
+    Gets Total and Ready node counts from the cluster.
+    Returns: (total, ready)
+    """
+    total = 0
+    ready = 0
+    try:
+        cmd = ["kubectl", "get", "nodes", "--no-headers"]
+        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode('utf-8').strip()
+        if output:
+            lines = output.split('\n')
+            total = len(lines)
+            for line in lines:
+                if "Ready" in line:
+                    ready += 1
+    except:
+        pass
+    return total, ready
+
 def monitor_k8s_metrics(results_dir):
     """
     Background thread function to poll Kubernetes HPA and Pod metrics for both Backend and Frontend.
@@ -128,10 +148,17 @@ def monitor_k8s_metrics(results_dir):
         be_pods = get_pod_metrics("backend")
         fe_pods = get_pod_metrics("frontend")
 
+        # Node Metrics
+        total_nodes, ready_nodes = get_node_metrics()
+
         # Store data point
         metrics_data.append({
             "time": timestamp,
             "elapsed": elapsed,
+            "nodes": {
+                "total": total_nodes,
+                "ready": ready_nodes
+            },
             "backend": {
                 "desired_replicas": be_desired,
                 "ready_replicas": be_ready,
@@ -226,6 +253,14 @@ def generate_k8s_report(results_dir):
             </div>
         </div>
 
+        <!-- NODES SECTION -->
+        <div class="row">
+            <div class="col card">
+                <h2>Data Nodes (Cluster Scaling)</h2>
+                <canvas id="nodeChart"></canvas>
+            </div>
+        </div>
+
         <script>
             const rawData = {json.dumps(metrics_data)};
             const labels = rawData.map(d => d.time);
@@ -237,6 +272,9 @@ def generate_k8s_report(results_dir):
             const feDesired = rawData.map(d => d.frontend.desired_replicas);
             const feReady = rawData.map(d => d.frontend.ready_replicas);
             const feHpaCpu = rawData.map(d => d.frontend.hpa_cpu);
+
+            const totalNodes = rawData.map(d => d.nodes.total);
+            const readyNodes = rawData.map(d => d.nodes.ready);
 
             const commonOptions = {{
                 responsive: true,
@@ -296,6 +334,28 @@ def generate_k8s_report(results_dir):
                 type: 'line',
                 data: {{ labels: labels, datasets: {json.dumps(fe_pod_datasets)} }},
                 options: {{ ...commonOptions, plugins: {{ legend: {{ position: 'bottom' }} }} }}
+            }});
+
+            // --- Node Chart ---
+            new Chart(document.getElementById('nodeChart'), {{
+                type: 'line',
+                data: {{
+                    labels: labels,
+                    datasets: [
+                        {{ label: 'Total Nodes', data: totalNodes, borderColor: '#9966FF', borderDash: [5, 5], stepped: true }},
+                        {{ label: 'Ready Nodes', data: readyNodes, borderColor: '#9966FF', backgroundColor: 'rgba(153, 102, 255, 0.2)', stepped: true, fill: true }}
+                    ]
+                }},
+                options: {{
+                    ...commonOptions,
+                    scales: {{
+                        y: {{
+                            beginAtZero: true,
+                            title: {{ display: true, text: 'Node Count' }},
+                            ticks: {{ stepSize: 1 }}
+                        }}
+                    }}
+                }}
             }});
         </script>
     </body>

@@ -125,6 +125,18 @@ variable "gke_autoscaling_enabled" {
   default     = true
 }
 
+variable "gke_disk_size_gb" {
+  description = "Disk size for each GKE node in GB"
+  type        = number
+  default     = 50
+}
+
+variable "gke_disk_type" {
+  description = "Disk type for GKE nodes (pd-standard or pd-ssd)"
+  type        = string
+  default     = "pd-standard"
+}
+
 # --- Backend Config ---
 variable "backend_cpu_request" {
   description = "CPU request for backend container"

@@ -53,6 +53,8 @@ resource "google_container_node_pool" "primary_nodes" {
 
   node_config {
     machine_type = var.gke_node_machine_type
+    disk_size_gb = var.gke_disk_size_gb
+    disk_type    = var.gke_disk_type
 
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
     service_account = google_service_account.gke_sa.email
