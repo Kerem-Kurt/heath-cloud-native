@@ -1,3 +1,6 @@
+USERS = 10
+SPAWN_RATE = 1
+
 # ================== Database ==================
 db_machine_type = "e2-medium" # 2 vCPUs, 4 GB RAM
 db_disk_size    = 20 # GB

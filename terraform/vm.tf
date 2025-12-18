@@ -3,6 +3,8 @@ resource "google_compute_instance" "postgres_vm" {
   machine_type = var.db_machine_type
   zone         = var.zone
 
+  allow_stopping_for_update = true
+
   boot_disk {
     initialize_params {
       image = var.db_image

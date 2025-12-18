@@ -1,0 +1,150 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>K8s Metrics</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f4f4f4; }
+            .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            h1, h2 { text-align: center; color: #333; }
+            .row { display: flex; gap: 20px; flex-wrap: wrap; }
+            .col { flex: 1; min-width: 45%; }
+            canvas { max-height: 350px; }
+        </style>
+    </head>
+    <body>
+        <h1>Kubernetes Full Stack Scaling Report</h1>
+        
+        <!-- BACKEND SECTION -->
+        <div class="row">
+            <div class="col card">
+                <h2>Backend HPA (Replicas vs Avg CPU)</h2>
+                <canvas id="beHpaChart"></canvas>
+            </div>
+            <div class="col card">
+                <h2>Backend Pod CPU (millicores)</h2>
+                <canvas id="bePodsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- FRONTEND SECTION -->
+        <div class="row">
+            <div class="col card">
+                <h2>Frontend HPA (Replicas vs Avg CPU)</h2>
+                <canvas id="feHpaChart"></canvas>
+            </div>
+            <div class="col card">
+                <h2>Frontend Pod CPU (millicores)</h2>
+                <canvas id="fePodsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- NODES SECTION -->
+        <div class="row">
+            <div class="col card">
+                <h2>Data Nodes (Cluster Scaling)</h2>
+                <canvas id="nodeChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            const rawData = [{"time": "11:39:55", "elapsed": 0, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 123, "pods": {"heath-backend-7c9d444c65-4fcrb": 440}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 0}}}, {"time": "11:40:05", "elapsed": 10, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 26, "pods": {"heath-backend-7c9d444c65-4fcrb": 155}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 0}}}, {"time": "11:40:15", "elapsed": 19, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 333, "pods": {"heath-backend-7c9d444c65-4fcrb": 155}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 0}}}, {"time": "11:40:25", "elapsed": 29, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 333, "pods": {"heath-backend-7c9d444c65-4fcrb": 155}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 0}}}, {"time": "11:40:35", "elapsed": 39, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 96, "pods": {"heath-backend-7c9d444c65-4fcrb": 586}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:40:45", "elapsed": 49, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 4, "ready_replicas": 4, "hpa_cpu": 96, "pods": {"heath-backend-7c9d444c65-4fcrb": 586}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:40:55", "elapsed": 59, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 8, "ready_replicas": 8, "hpa_cpu": 96, "pods": {"heath-backend-7c9d444c65-4fcrb": 586}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:41:05", "elapsed": 69, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 63, "pods": {"heath-backend-7c9d444c65-4fcrb": 157, "heath-backend-7c9d444c65-6xcz7": 610, "heath-backend-7c9d444c65-8zghs": 530, "heath-backend-7c9d444c65-dmz74": 635, "heath-backend-7c9d444c65-fz8qc": 504, "heath-backend-7c9d444c65-jdh9j": 623, "heath-backend-7c9d444c65-mpf9n": 517, "heath-backend-7c9d444c65-vb8zr": 513}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:41:14", "elapsed": 79, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 166, "pods": {"heath-backend-7c9d444c65-4fcrb": 157, "heath-backend-7c9d444c65-6xcz7": 610, "heath-backend-7c9d444c65-8zghs": 530, "heath-backend-7c9d444c65-dmz74": 635, "heath-backend-7c9d444c65-fz8qc": 504, "heath-backend-7c9d444c65-jdh9j": 623, "heath-backend-7c9d444c65-mpf9n": 517, "heath-backend-7c9d444c65-vb8zr": 513}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:41:24", "elapsed": 89, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 166, "pods": {"heath-backend-7c9d444c65-4fcrb": 157, "heath-backend-7c9d444c65-6xcz7": 610, "heath-backend-7c9d444c65-8zghs": 530, "heath-backend-7c9d444c65-dmz74": 635, "heath-backend-7c9d444c65-fz8qc": 504, "heath-backend-7c9d444c65-jdh9j": 623, "heath-backend-7c9d444c65-mpf9n": 517, "heath-backend-7c9d444c65-vb8zr": 513}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:41:34", "elapsed": 99, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 170, "pods": {"heath-backend-7c9d444c65-4fcrb": 43, "heath-backend-7c9d444c65-6xcz7": 551, "heath-backend-7c9d444c65-8zghs": 469, "heath-backend-7c9d444c65-dmz74": 475, "heath-backend-7c9d444c65-fz8qc": 474, "heath-backend-7c9d444c65-g4dk4": 470, "heath-backend-7c9d444c65-jdh9j": 465, "heath-backend-7c9d444c65-mpf9n": 500, "heath-backend-7c9d444c65-vb8zr": 487}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:41:44", "elapsed": 109, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 170, "pods": {"heath-backend-7c9d444c65-4fcrb": 43, "heath-backend-7c9d444c65-6xcz7": 551, "heath-backend-7c9d444c65-8zghs": 469, "heath-backend-7c9d444c65-dmz74": 475, "heath-backend-7c9d444c65-fz8qc": 474, "heath-backend-7c9d444c65-g4dk4": 470, "heath-backend-7c9d444c65-jdh9j": 465, "heath-backend-7c9d444c65-mpf9n": 500, "heath-backend-7c9d444c65-vb8zr": 487}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:41:54", "elapsed": 118, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 169, "pods": {"heath-backend-7c9d444c65-4fcrb": 43, "heath-backend-7c9d444c65-6xcz7": 551, "heath-backend-7c9d444c65-8zghs": 469, "heath-backend-7c9d444c65-dmz74": 475, "heath-backend-7c9d444c65-fz8qc": 474, "heath-backend-7c9d444c65-g4dk4": 470, "heath-backend-7c9d444c65-jdh9j": 465, "heath-backend-7c9d444c65-mpf9n": 500, "heath-backend-7c9d444c65-vb8zr": 487}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:42:04", "elapsed": 128, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 169, "pods": {"heath-backend-7c9d444c65-4fcrb": 12, "heath-backend-7c9d444c65-6xcz7": 478, "heath-backend-7c9d444c65-8zghs": 504, "heath-backend-7c9d444c65-dmz74": 482, "heath-backend-7c9d444c65-fz8qc": 465, "heath-backend-7c9d444c65-g4dk4": 473, "heath-backend-7c9d444c65-jdh9j": 449, "heath-backend-7c9d444c65-mpf9n": 469, "heath-backend-7c9d444c65-vb8zr": 467}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:42:14", "elapsed": 138, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 169, "pods": {"heath-backend-7c9d444c65-4fcrb": 12, "heath-backend-7c9d444c65-6xcz7": 478, "heath-backend-7c9d444c65-8zghs": 504, "heath-backend-7c9d444c65-dmz74": 482, "heath-backend-7c9d444c65-fz8qc": 465, "heath-backend-7c9d444c65-g4dk4": 473, "heath-backend-7c9d444c65-jdh9j": 449, "heath-backend-7c9d444c65-mpf9n": 469, "heath-backend-7c9d444c65-vb8zr": 467}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:42:24", "elapsed": 148, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 172, "pods": {"heath-backend-7c9d444c65-4fcrb": 12, "heath-backend-7c9d444c65-6xcz7": 478, "heath-backend-7c9d444c65-8zghs": 504, "heath-backend-7c9d444c65-dmz74": 482, "heath-backend-7c9d444c65-fz8qc": 465, "heath-backend-7c9d444c65-g4dk4": 473, "heath-backend-7c9d444c65-jdh9j": 449, "heath-backend-7c9d444c65-mpf9n": 469, "heath-backend-7c9d444c65-vb8zr": 467}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:42:34", "elapsed": 158, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 115, "pods": {"heath-backend-7c9d444c65-4fcrb": 18, "heath-backend-7c9d444c65-6xcz7": 378, "heath-backend-7c9d444c65-8zghs": 325, "heath-backend-7c9d444c65-dmz74": 416, "heath-backend-7c9d444c65-fz8qc": 505, "heath-backend-7c9d444c65-g4dk4": 568, "heath-backend-7c9d444c65-jdh9j": 369, "heath-backend-7c9d444c65-mpf9n": 387, "heath-backend-7c9d444c65-vb8zr": 385}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:42:44", "elapsed": 168, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 115, "pods": {"heath-backend-7c9d444c65-4fcrb": 18, "heath-backend-7c9d444c65-6xcz7": 378, "heath-backend-7c9d444c65-8zghs": 325, "heath-backend-7c9d444c65-dmz74": 416, "heath-backend-7c9d444c65-fz8qc": 505, "heath-backend-7c9d444c65-g4dk4": 568, "heath-backend-7c9d444c65-jdh9j": 369, "heath-backend-7c9d444c65-mpf9n": 387, "heath-backend-7c9d444c65-vb8zr": 385}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:42:54", "elapsed": 178, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 48, "pods": {"heath-backend-7c9d444c65-4fcrb": 18, "heath-backend-7c9d444c65-6xcz7": 378, "heath-backend-7c9d444c65-8zghs": 325, "heath-backend-7c9d444c65-dmz74": 416, "heath-backend-7c9d444c65-fz8qc": 505, "heath-backend-7c9d444c65-g4dk4": 568, "heath-backend-7c9d444c65-jdh9j": 369, "heath-backend-7c9d444c65-mpf9n": 387, "heath-backend-7c9d444c65-vb8zr": 385}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}, {"time": "11:43:04", "elapsed": 188, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 31, "pods": {"heath-backend-7c9d444c65-4fcrb": 36, "heath-backend-7c9d444c65-6xcz7": 55, "heath-backend-7c9d444c65-8zghs": 178, "heath-backend-7c9d444c65-dmz74": 124, "heath-backend-7c9d444c65-fz8qc": 70, "heath-backend-7c9d444c65-g4dk4": 129, "heath-backend-7c9d444c65-jdh9j": 89, "heath-backend-7c9d444c65-mpf9n": 174, "heath-backend-7c9d444c65-vb8zr": 19}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 3}}}, {"time": "11:43:14", "elapsed": 198, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 31, "pods": {"heath-backend-7c9d444c65-4fcrb": 36, "heath-backend-7c9d444c65-6xcz7": 55, "heath-backend-7c9d444c65-8zghs": 178, "heath-backend-7c9d444c65-dmz74": 124, "heath-backend-7c9d444c65-fz8qc": 70, "heath-backend-7c9d444c65-g4dk4": 129, "heath-backend-7c9d444c65-jdh9j": 89, "heath-backend-7c9d444c65-mpf9n": 174, "heath-backend-7c9d444c65-vb8zr": 19}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 3}}}, {"time": "11:43:24", "elapsed": 208, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 22, "pods": {"heath-backend-7c9d444c65-4fcrb": 36, "heath-backend-7c9d444c65-6xcz7": 55, "heath-backend-7c9d444c65-8zghs": 178, "heath-backend-7c9d444c65-dmz74": 124, "heath-backend-7c9d444c65-fz8qc": 70, "heath-backend-7c9d444c65-g4dk4": 129, "heath-backend-7c9d444c65-jdh9j": 89, "heath-backend-7c9d444c65-mpf9n": 174, "heath-backend-7c9d444c65-vb8zr": 19}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 0, "pods": {"heath-frontend-7fbbcb98f8-684ps": 3}}}, {"time": "11:43:34", "elapsed": 218, "nodes": {"total": 1, "ready": 1}, "backend": {"desired_replicas": 9, "ready_replicas": 9, "hpa_cpu": 15, "pods": {"heath-backend-7c9d444c65-4fcrb": 12, "heath-backend-7c9d444c65-6xcz7": 53, "heath-backend-7c9d444c65-8zghs": 41, "heath-backend-7c9d444c65-dmz74": 37, "heath-backend-7c9d444c65-fz8qc": 53, "heath-backend-7c9d444c65-g4dk4": 36, "heath-backend-7c9d444c65-jdh9j": 33, "heath-backend-7c9d444c65-mpf9n": 49, "heath-backend-7c9d444c65-vb8zr": 116}}, "frontend": {"desired_replicas": 1, "ready_replicas": 1, "hpa_cpu": 1, "pods": {"heath-frontend-7fbbcb98f8-684ps": 2}}}];
+            const labels = rawData.map(d => d.time);
+            
+            const beDesired = rawData.map(d => d.backend.desired_replicas);
+            const beReady = rawData.map(d => d.backend.ready_replicas);
+            const beHpaCpu = rawData.map(d => d.backend.hpa_cpu);
+            
+            const feDesired = rawData.map(d => d.frontend.desired_replicas);
+            const feReady = rawData.map(d => d.frontend.ready_replicas);
+            const feHpaCpu = rawData.map(d => d.frontend.hpa_cpu);
+
+            const totalNodes = rawData.map(d => d.nodes.total);
+            const readyNodes = rawData.map(d => d.nodes.ready);
+
+            const commonOptions = {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+            };
+
+            const hpaScales = {
+                y: {
+                    type: 'linear', display: true, position: 'left',
+                    title: { display: true, text: 'Pod Count' },
+                    min: 0, suggestedMax: 5,
+                    ticks: { stepSize: 1 }  // INTEGERS ONLY
+                },
+                y1: {
+                    type: 'linear', display: true, position: 'right',
+                    title: { display: true, text: 'HPA CPU Target (%)' },
+                    grid: { drawOnChartArea: false },
+                    min: 0
+                }
+            };
+
+            // --- Backend Charts ---
+            new Chart(document.getElementById('beHpaChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Desired Replicas', data: beDesired, borderColor: '#36A2EB', borderDash: [5, 5], yAxisID: 'y', stepped: true },
+                        { label: 'Ready Replicas', data: beReady, borderColor: '#36A2EB', backgroundColor: 'rgba(54, 162, 235, 0.2)', yAxisID: 'y', stepped: true, fill: true },
+                        { label: 'Avg CPU %', data: beHpaCpu, borderColor: '#FF6384', yAxisID: 'y1', tension: 0.4 }
+                    ]
+                },
+                options: { ...commonOptions, scales: hpaScales }
+            });
+
+            new Chart(document.getElementById('bePodsChart'), {
+                type: 'line',
+                data: { labels: labels, datasets: [{"label": "heath-backend-7c9d444c65-4fcrb", "data": [440, 155, 155, 155, 586, 586, 586, 157, 157, 157, 43, 43, 43, 12, 12, 12, 18, 18, 18, 36, 36, 36, 12], "borderColor": "#FF6384", "backgroundColor": "#FF6384", "fill": false, "tension": 0.1}, {"label": "heath-backend-7c9d444c65-6xcz7", "data": [0, 0, 0, 0, 0, 0, 0, 610, 610, 610, 551, 551, 551, 478, 478, 478, 378, 378, 378, 55, 55, 55, 53], "borderColor": "#36A2EB", "backgroundColor": "#36A2EB", "fill": false, "tension": 0.1}, {"label": "heath-backend-7c9d444c65-8zghs", "data": [0, 0, 0, 0, 0, 0, 0, 530, 530, 530, 469, 469, 469, 504, 504, 504, 325, 325, 325, 178, 178, 178, 41], "borderColor": "#FFCE56", "backgroundColor": "#FFCE56", "fill": false, "tension": 0.1}, {"label": "heath-backend-7c9d444c65-dmz74", "data": [0, 0, 0, 0, 0, 0, 0, 635, 635, 635, 475, 475, 475, 482, 482, 482, 416, 416, 416, 124, 124, 124, 37], "borderColor": "#4BC0C0", "backgroundColor": "#4BC0C0", "fill": false, "tension": 0.1}, {"label": "heath-backend-7c9d444c65-fz8qc", "data": [0, 0, 0, 0, 0, 0, 0, 504, 504, 504, 474, 474, 474, 465, 465, 465, 505, 505, 505, 70, 70, 70, 53], "borderColor": "#9966FF", "backgroundColor": "#9966FF", "fill": false, "tension": 0.1}, {"label": "heath-backend-7c9d444c65-g4dk4", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 470, 470, 470, 473, 473, 473, 568, 568, 568, 129, 129, 129, 36], "borderColor": "#FF9F40", "backgroundColor": "#FF9F40", "fill": false, "tension": 0.1}, {"label": "heath-backend-7c9d444c65-jdh9j", "data": [0, 0, 0, 0, 0, 0, 0, 623, 623, 623, 465, 465, 465, 449, 449, 449, 369, 369, 369, 89, 89, 89, 33], "borderColor": "#C9CBCF", "backgroundColor": "#C9CBCF", "fill": false, "tension": 0.1}, {"label": "heath-backend-7c9d444c65-mpf9n", "data": [0, 0, 0, 0, 0, 0, 0, 517, 517, 517, 500, 500, 500, 469, 469, 469, 387, 387, 387, 174, 174, 174, 49], "borderColor": "#E7E9ED", "backgroundColor": "#E7E9ED", "fill": false, "tension": 0.1}, {"label": "heath-backend-7c9d444c65-vb8zr", "data": [0, 0, 0, 0, 0, 0, 0, 513, 513, 513, 487, 487, 487, 467, 467, 467, 385, 385, 385, 19, 19, 19, 116], "borderColor": "#767676", "backgroundColor": "#767676", "fill": false, "tension": 0.1}] },
+                options: { ...commonOptions, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // --- Frontend Charts ---
+            new Chart(document.getElementById('feHpaChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Desired Replicas', data: feDesired, borderColor: '#4BC0C0', borderDash: [5, 5], yAxisID: 'y', stepped: true },
+                        { label: 'Ready Replicas', data: feReady, borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.2)', yAxisID: 'y', stepped: true, fill: true },
+                        { label: 'Avg CPU %', data: feHpaCpu, borderColor: '#FF9F40', yAxisID: 'y1', tension: 0.4 }
+                    ]
+                },
+                options: { ...commonOptions, scales: hpaScales }
+            });
+
+            new Chart(document.getElementById('fePodsChart'), {
+                type: 'line',
+                data: { labels: labels, datasets: [{"label": "heath-frontend-7fbbcb98f8-684ps", "data": [0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2], "borderColor": "#FF6384", "backgroundColor": "#FF6384", "fill": false, "tension": 0.1}] },
+                options: { ...commonOptions, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // --- Node Chart ---
+            new Chart(document.getElementById('nodeChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Total Nodes', data: totalNodes, borderColor: '#9966FF', borderDash: [5, 5], stepped: true },
+                        { label: 'Ready Nodes', data: readyNodes, borderColor: '#9966FF', backgroundColor: 'rgba(153, 102, 255, 0.2)', stepped: true, fill: true }
+                    ]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Node Count' },
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        </script>
+    </body>
+    </html>
+    

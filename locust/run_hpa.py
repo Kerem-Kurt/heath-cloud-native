@@ -16,7 +16,7 @@ USER_CLASS = "AuthenticatedUser" # High CPU usage profile
 POLL_INTERVAL = 5 # seconds
 TEST_DURATION = 120 # seconds
 
-USERS = 10
+USERS = 2000
 SPAWN_RATE = 1
 
 # Global list to store metrics

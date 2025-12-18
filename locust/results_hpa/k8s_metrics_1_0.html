@@ -1,0 +1,113 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>K8s Metrics</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f4f4f4; }
+            .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            h1, h2 { text-align: center; color: #333; }
+            .row { display: flex; gap: 20px; flex-wrap: wrap; }
+            .col { flex: 1; min-width: 45%; }
+            canvas { max-height: 350px; }
+        </style>
+    </head>
+    <body>
+        <h1>Kubernetes Full Stack Scaling Report</h1>
+        
+        <!-- BACKEND SECTION -->
+        <div class="row">
+            <div class="col card">
+                <h2>Backend HPA (Replicas vs Avg CPU)</h2>
+                <canvas id="beHpaChart"></canvas>
+            </div>
+            <div class="col card">
+                <h2>Backend Pod CPU (millicores)</h2>
+                <canvas id="bePodsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- FRONTEND SECTION -->
+        <div class="row">
+            <div class="col card">
+                <h2>Frontend HPA (Replicas vs Avg CPU)</h2>
+                <canvas id="feHpaChart"></canvas>
+            </div>
+            <div class="col card">
+                <h2>Frontend Pod CPU (millicores)</h2>
+                <canvas id="fePodsChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            const rawData = [{"time": "21:09:42", "elapsed": 0, "backend": {"replicas": 1, "hpa_cpu": 1, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 2}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 0}}}, {"time": "21:09:51", "elapsed": 9, "backend": {"replicas": 1, "hpa_cpu": 1, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 2}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 0}}}, {"time": "21:10:00", "elapsed": 18, "backend": {"replicas": 1, "hpa_cpu": 82, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 2}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 0}}}, {"time": "21:10:09", "elapsed": 27, "backend": {"replicas": 2, "hpa_cpu": 82, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 85}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:10:18", "elapsed": 35, "backend": {"replicas": 2, "hpa_cpu": 82, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 85}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:10:27", "elapsed": 45, "backend": {"replicas": 2, "hpa_cpu": 82, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 85}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:10:37", "elapsed": 55, "backend": {"replicas": 2, "hpa_cpu": 82, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 37, "heath-backend-6bb8cfd7dd-t8t2c": 500}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:10:46", "elapsed": 64, "backend": {"replicas": 2, "hpa_cpu": 103, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 37, "heath-backend-6bb8cfd7dd-t8t2c": 500}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:10:55", "elapsed": 73, "backend": {"replicas": 3, "hpa_cpu": 103, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 37, "heath-backend-6bb8cfd7dd-t8t2c": 500}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:11:05", "elapsed": 83, "backend": {"replicas": 3, "hpa_cpu": 103, "pods": {"heath-backend-6bb8cfd7dd-rfd8t": 37, "heath-backend-6bb8cfd7dd-t8t2c": 500}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:11:14", "elapsed": 92, "backend": {"replicas": 3, "hpa_cpu": 136, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 497, "heath-backend-6bb8cfd7dd-rfd8t": 16, "heath-backend-6bb8cfd7dd-t8t2c": 501}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:11:24", "elapsed": 102, "backend": {"replicas": 3, "hpa_cpu": 136, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 497, "heath-backend-6bb8cfd7dd-rfd8t": 16, "heath-backend-6bb8cfd7dd-t8t2c": 501}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:11:33", "elapsed": 111, "backend": {"replicas": 3, "hpa_cpu": 136, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 497, "heath-backend-6bb8cfd7dd-rfd8t": 16, "heath-backend-6bb8cfd7dd-t8t2c": 501}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:11:44", "elapsed": 122, "backend": {"replicas": 3, "hpa_cpu": 136, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 500, "heath-backend-6bb8cfd7dd-rfd8t": 15, "heath-backend-6bb8cfd7dd-t8t2c": 477}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:11:54", "elapsed": 132, "backend": {"replicas": 3, "hpa_cpu": 136, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 500, "heath-backend-6bb8cfd7dd-rfd8t": 15, "heath-backend-6bb8cfd7dd-t8t2c": 477}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:12:03", "elapsed": 141, "backend": {"replicas": 3, "hpa_cpu": 96, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 500, "heath-backend-6bb8cfd7dd-rfd8t": 15, "heath-backend-6bb8cfd7dd-t8t2c": 477}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:12:12", "elapsed": 150, "backend": {"replicas": 3, "hpa_cpu": 96, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 500, "heath-backend-6bb8cfd7dd-rfd8t": 20, "heath-backend-6bb8cfd7dd-t8t2c": 154}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:12:21", "elapsed": 159, "backend": {"replicas": 3, "hpa_cpu": 85, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 500, "heath-backend-6bb8cfd7dd-rfd8t": 20, "heath-backend-6bb8cfd7dd-t8t2c": 154}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:12:30", "elapsed": 168, "backend": {"replicas": 3, "hpa_cpu": 55, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 500, "heath-backend-6bb8cfd7dd-rfd8t": 20, "heath-backend-6bb8cfd7dd-t8t2c": 154}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:12:39", "elapsed": 177, "backend": {"replicas": 3, "hpa_cpu": 55, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 344, "heath-backend-6bb8cfd7dd-rfd8t": 11, "heath-backend-6bb8cfd7dd-t8t2c": 95}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:12:48", "elapsed": 186, "backend": {"replicas": 3, "hpa_cpu": 33, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 344, "heath-backend-6bb8cfd7dd-rfd8t": 11, "heath-backend-6bb8cfd7dd-t8t2c": 95}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:12:59", "elapsed": 197, "backend": {"replicas": 3, "hpa_cpu": 33, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 344, "heath-backend-6bb8cfd7dd-rfd8t": 11, "heath-backend-6bb8cfd7dd-t8t2c": 95}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:13:11", "elapsed": 209, "backend": {"replicas": 3, "hpa_cpu": 33, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 137, "heath-backend-6bb8cfd7dd-rfd8t": 28, "heath-backend-6bb8cfd7dd-t8t2c": 70}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:13:21", "elapsed": 219, "backend": {"replicas": 3, "hpa_cpu": 33, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 137, "heath-backend-6bb8cfd7dd-rfd8t": 28, "heath-backend-6bb8cfd7dd-t8t2c": 70}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:13:31", "elapsed": 229, "backend": {"replicas": 3, "hpa_cpu": 33, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 137, "heath-backend-6bb8cfd7dd-rfd8t": 28, "heath-backend-6bb8cfd7dd-t8t2c": 70}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:13:43", "elapsed": 241, "backend": {"replicas": 3, "hpa_cpu": 33, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 69, "heath-backend-6bb8cfd7dd-rfd8t": 18, "heath-backend-6bb8cfd7dd-t8t2c": 93}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:13:53", "elapsed": 251, "backend": {"replicas": 3, "hpa_cpu": 26, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 69, "heath-backend-6bb8cfd7dd-rfd8t": 18, "heath-backend-6bb8cfd7dd-t8t2c": 93}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:14:03", "elapsed": 261, "backend": {"replicas": 3, "hpa_cpu": 19, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 69, "heath-backend-6bb8cfd7dd-rfd8t": 18, "heath-backend-6bb8cfd7dd-t8t2c": 93}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:14:12", "elapsed": 270, "backend": {"replicas": 3, "hpa_cpu": 19, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 66, "heath-backend-6bb8cfd7dd-rfd8t": 17, "heath-backend-6bb8cfd7dd-t8t2c": 69}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:14:24", "elapsed": 282, "backend": {"replicas": 3, "hpa_cpu": 19, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 66, "heath-backend-6bb8cfd7dd-rfd8t": 17, "heath-backend-6bb8cfd7dd-t8t2c": 69}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:14:32", "elapsed": 290, "backend": {"replicas": 3, "hpa_cpu": 24, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 66, "heath-backend-6bb8cfd7dd-rfd8t": 17, "heath-backend-6bb8cfd7dd-t8t2c": 69}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 2}}}, {"time": "21:14:41", "elapsed": 299, "backend": {"replicas": 3, "hpa_cpu": 24, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 93, "heath-backend-6bb8cfd7dd-rfd8t": 22, "heath-backend-6bb8cfd7dd-t8t2c": 71}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:14:51", "elapsed": 309, "backend": {"replicas": 3, "hpa_cpu": 24, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 93, "heath-backend-6bb8cfd7dd-rfd8t": 22, "heath-backend-6bb8cfd7dd-t8t2c": 71}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:15:01", "elapsed": 319, "backend": {"replicas": 3, "hpa_cpu": 24, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 93, "heath-backend-6bb8cfd7dd-rfd8t": 22, "heath-backend-6bb8cfd7dd-t8t2c": 71}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:15:10", "elapsed": 328, "backend": {"replicas": 3, "hpa_cpu": 24, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 81, "heath-backend-6bb8cfd7dd-rfd8t": 20, "heath-backend-6bb8cfd7dd-t8t2c": 69}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:15:22", "elapsed": 340, "backend": {"replicas": 3, "hpa_cpu": 19, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 81, "heath-backend-6bb8cfd7dd-rfd8t": 20, "heath-backend-6bb8cfd7dd-t8t2c": 69}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:15:31", "elapsed": 349, "backend": {"replicas": 3, "hpa_cpu": 34, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 81, "heath-backend-6bb8cfd7dd-rfd8t": 20, "heath-backend-6bb8cfd7dd-t8t2c": 69}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}, {"time": "21:15:40", "elapsed": 358, "backend": {"replicas": 3, "hpa_cpu": 34, "pods": {"heath-backend-6bb8cfd7dd-98nsj": 79, "heath-backend-6bb8cfd7dd-rfd8t": 21, "heath-backend-6bb8cfd7dd-t8t2c": 115}}, "frontend": {"replicas": 0, "hpa_cpu": 0, "pods": {"heath-frontend-5b469b978-hslnc": 3}}}];
+            const labels = rawData.map(d => d.time);
+            
+            const beReplicas = rawData.map(d => d.backend.replicas);
+            const beHpaCpu = rawData.map(d => d.backend.hpa_cpu);
+            
+            const feReplicas = rawData.map(d => d.frontend.replicas);
+            const feHpaCpu = rawData.map(d => d.frontend.hpa_cpu);
+
+            const commonOptions = {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+            };
+
+            const hpaScales = {
+                y: {
+                    type: 'linear', display: true, position: 'left',
+                    title: { display: true, text: 'Pod Count' },
+                    min: 0, suggestedMax: 5,
+                    ticks: { stepSize: 1 }  // INTEGERS ONLY
+                },
+                y1: {
+                    type: 'linear', display: true, position: 'right',
+                    title: { display: true, text: 'HPA CPU Target (%)' },
+                    grid: { drawOnChartArea: false },
+                    min: 0
+                }
+            };
+
+            // --- Backend Charts ---
+            new Chart(document.getElementById('beHpaChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Replicas', data: beReplicas, borderColor: '#36A2EB', backgroundColor: 'rgba(54, 162, 235, 0.1)', yAxisID: 'y', stepped: true, fill: true },
+                        { label: 'Avg CPU %', data: beHpaCpu, borderColor: '#FF6384', yAxisID: 'y1', tension: 0.4 }
+                    ]
+                },
+                options: { ...commonOptions, scales: hpaScales }
+            });
+
+            new Chart(document.getElementById('bePodsChart'), {
+                type: 'line',
+                data: { labels: labels, datasets: [{"label": "heath-backend-6bb8cfd7dd-98nsj", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 497, 497, 497, 500, 500, 500, 500, 500, 500, 344, 344, 344, 137, 137, 137, 69, 69, 69, 66, 66, 66, 93, 93, 93, 81, 81, 81, 79], "borderColor": "#FF6384", "backgroundColor": "#FF6384", "fill": false, "tension": 0.1}, {"label": "heath-backend-6bb8cfd7dd-rfd8t", "data": [2, 2, 2, 85, 85, 85, 37, 37, 37, 37, 16, 16, 16, 15, 15, 15, 20, 20, 20, 11, 11, 11, 28, 28, 28, 18, 18, 18, 17, 17, 17, 22, 22, 22, 20, 20, 20, 21], "borderColor": "#36A2EB", "backgroundColor": "#36A2EB", "fill": false, "tension": 0.1}, {"label": "heath-backend-6bb8cfd7dd-t8t2c", "data": [0, 0, 0, 0, 0, 0, 500, 500, 500, 500, 501, 501, 501, 477, 477, 477, 154, 154, 154, 95, 95, 95, 70, 70, 70, 93, 93, 93, 69, 69, 69, 71, 71, 71, 69, 69, 69, 115], "borderColor": "#FFCE56", "backgroundColor": "#FFCE56", "fill": false, "tension": 0.1}] },
+                options: { ...commonOptions, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // --- Frontend Charts ---
+            new Chart(document.getElementById('feHpaChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Replicas', data: feReplicas, borderColor: '#4BC0C0', backgroundColor: 'rgba(75, 192, 192, 0.1)', yAxisID: 'y', stepped: true, fill: true },
+                        { label: 'Avg CPU %', data: feHpaCpu, borderColor: '#FF9F40', yAxisID: 'y1', tension: 0.4 }
+                    ]
+                },
+                options: { ...commonOptions, scales: hpaScales }
+            });
+
+            new Chart(document.getElementById('fePodsChart'), {
+                type: 'line',
+                data: { labels: labels, datasets: [{"label": "heath-frontend-5b469b978-hslnc", "data": [0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3], "borderColor": "#FF6384", "backgroundColor": "#FF6384", "fill": false, "tension": 0.1}] },
+                options: { ...commonOptions, plugins: { legend: { position: 'bottom' } } }
+            });
+        </script>
+    </body>
+    </html>
+    

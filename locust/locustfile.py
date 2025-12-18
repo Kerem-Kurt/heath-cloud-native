@@ -1,4 +1,5 @@
 from locust import HttpUser, task, between, tag, SequentialTaskSet
+from locust.exception import StopUser
 import random
 import string
 
@@ -85,7 +86,8 @@ class AuthenticatedUser(HttpUser):
     wait_time = between(2, 5)
     
     def on_start(self):
-        register_and_login(self)
+        if not register_and_login(self):
+            raise StopUser()  # Stop user if registration/login fails
 
     @tag('read', 'db_read_complex')
     @task(3)
@@ -142,9 +144,10 @@ class SocialUser(HttpUser):
     feed_ids = []
 
     def on_start(self):
-        if register_and_login(self):
-            # Fetch recent feeds to populate local cache of IDs
-            self.refresh_feeds()
+        if not register_and_login(self):
+            raise StopUser()  # Stop user if registration/login fails
+        # Fetch recent feeds to populate local cache of IDs
+        self.refresh_feeds()
             
     def refresh_feeds(self):
         with self.client.get("/api/feeds/recent?pageNumber=0", catch_response=True, name="/api/feeds/recent [Setup]") as response:
@@ -256,4 +259,5 @@ class JourneyUser(HttpUser):
     tasks = [JourneyTaskSet]
     
     def on_start(self):
-        register_and_login(self)
+        if not register_and_login(self):
+            raise StopUser()  # Stop user if registration/login fails
