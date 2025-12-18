@@ -8,6 +8,7 @@ import json
 import datetime
 import shutil
 import re
+import argparse
 
 # Configuration
 HOST = "http://136.114.153.163/" # Ensure this matches your Ingress IP
@@ -16,8 +17,8 @@ USER_CLASS = "AuthenticatedUser" # High CPU usage profile
 POLL_INTERVAL = 5 # seconds
 TEST_DURATION = 120 # seconds
 
-USERS = 2000
-SPAWN_RATE = 1
+USERS = 1000
+SPAWN_RATE = 20
 
 # Global list to store metrics
 metrics_data = []
@@ -124,6 +125,31 @@ def get_node_metrics():
         pass
     return total, ready
 
+def get_node_cpu_utilization():
+    """
+    Parses `kubectl top nodes --no-headers` to get CPU % for each node.
+    Returns: dict { "node_name": cpu_percent }
+    """
+    node_cpu_map = {}
+    try:
+        cmd = ["kubectl", "top", "nodes", "--no-headers"]
+        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode('utf-8').strip()
+        
+        for line in output.split('\n'):
+            parts = line.split()
+            # Format: NAME CPU(cores) CPU% MEMORY(bytes) MEMORY%
+            # Example: gke-node-1  150m   8%   1000Mi   10%
+            if len(parts) >= 3:
+                node_name = parts[0]
+                cpu_percent_str = parts[2].replace('%', '')
+                try:
+                    node_cpu_map[node_name] = int(cpu_percent_str)
+                except:
+                    node_cpu_map[node_name] = 0
+    except:
+        pass
+    return node_cpu_map
+
 def fetch_recent_db_pool_logs(since_seconds=10):
     """
     Fetches recent backend logs and parses HikariCP connection pool stats.
@@ -223,6 +249,7 @@ def monitor_k8s_metrics(results_dir):
 
         # Node Metrics
         total_nodes, ready_nodes = get_node_metrics()
+        node_cpu_usage = get_node_cpu_utilization()
         
         # DB Connection Pool Metrics (polled at same interval)
         db_metrics = poll_db_pool_metrics()
@@ -241,7 +268,8 @@ def monitor_k8s_metrics(results_dir):
             "elapsed": elapsed,
             "nodes": {
                 "total": total_nodes,
-                "ready": ready_nodes
+                "ready": ready_nodes,
+                "cpu_utilization": node_cpu_usage
             },
             "backend": {
                 "desired_replicas": be_desired,
@@ -297,6 +325,36 @@ def generate_k8s_report(results_dir):
     be_pod_datasets = get_pod_datasets('backend')
     fe_pod_datasets = get_pod_datasets('frontend')
     
+    # NEW: Node CPU Datasets
+    def get_node_cpu_datasets():
+        all_nodes = set()
+        for entry in metrics_data:
+            if 'cpu_utilization' in entry['nodes']:
+                all_nodes.update(entry['nodes']['cpu_utilization'].keys())
+            
+        datasets = []
+        colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#E7E9ED', '#767676']
+        
+        for idx, name in enumerate(sorted(all_nodes)):
+            points = []
+            for entry in metrics_data:
+                if 'cpu_utilization' in entry['nodes']:
+                    points.append(entry['nodes']['cpu_utilization'].get(name, 0))
+                else:
+                    points.append(0)
+            
+            datasets.append({
+                "label": name,
+                "data": points,
+                "borderColor": colors[idx % len(colors)],
+                "backgroundColor": colors[idx % len(colors)],
+                "fill": False,
+                "tension": 0.1
+            })
+        return datasets
+
+    node_cpu_datasets = get_node_cpu_datasets()
+
     # Prepare DB Pool data (now collected at regular intervals)
     db_pool_labels = [d['time'] for d in db_pool_data]
     db_pool_total = [d['total'] for d in db_pool_data]
@@ -547,6 +605,10 @@ def generate_k8s_report(results_dir):
                 <h2>Cluster Nodes (Autoscaling)</h2>
                 <canvas id="nodeChart"></canvas>
             </div>
+            <div class="col card">
+                <h2>Node CPU Utilization (%)</h2>
+                <canvas id="nodeCpuChart"></canvas>
+            </div>
         </div>
 
         <script>
@@ -646,6 +708,23 @@ def generate_k8s_report(results_dir):
                 }}
             }});
             
+            // --- Node CPU Chart ---
+            new Chart(document.getElementById('nodeCpuChart'), {{
+                type: 'line',
+                data: {{ labels: labels, datasets: {json.dumps(node_cpu_datasets)} }},
+                options: {{
+                    ...commonOptions,
+                    scales: {{
+                        y: {{
+                            beginAtZero: true,
+                            max: 110,
+                            title: {{ display: true, text: 'CPU Utilization (%)' }}
+                        }}
+                    }},
+                    plugins: {{ legend: {{ position: 'bottom' }} }}
+                }}
+            }});
+            
             {db_pool_script}
         </script>
     </body>
@@ -660,8 +739,22 @@ def generate_k8s_report(results_dir):
     print(f"   📈 DB Pool events captured: {len(db_pool_data)}")
 
 def run_hpa_test():
+    parser = argparse.ArgumentParser(description='Run Locust HPA Test')
+    parser.add_argument('--users', type=int, default=1000, help='Number of users')
+    parser.add_argument('--spawn-rate', type=int, default=50, help='Spawn rate')
+    parser.add_argument('--duration', type=int, default=120, help='Test duration in seconds')
+    parser.add_argument('--user-class', type=str, default="AuthenticatedUser", help='Locust User Class')
+    args = parser.parse_args()
+
     global monitoring_active, metrics_data, db_pool_data
     
+    # Update global vars
+    global USERS, SPAWN_RATE, TEST_DURATION, USER_CLASS
+    USERS = args.users
+    SPAWN_RATE = args.spawn_rate
+    TEST_DURATION = args.duration
+    USER_CLASS = args.user_class
+
     # Reset global data for fresh test
     metrics_data = []
     db_pool_data = []

@@ -2,6 +2,7 @@ from locust import HttpUser, task, between, tag, SequentialTaskSet
 from locust.exception import StopUser
 import random
 import string
+import time # Added for time.sleep
 
 # --- Helper Functions ---
 def random_string(length=8):
@@ -86,8 +87,10 @@ class AuthenticatedUser(HttpUser):
     wait_time = between(2, 5)
     
     def on_start(self):
-        if not register_and_login(self):
-            raise StopUser()  # Stop user if registration/login fails
+        # Retry loop instead of quitting
+        while not register_and_login(self):
+            time.sleep(5) # Wait 5 seconds and try again
+            # raise StopUser()  <-- COMMENT THIS OUT
 
     @tag('read', 'db_read_complex')
     @task(3)
