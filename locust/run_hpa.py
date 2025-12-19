@@ -17,8 +17,8 @@ USER_CLASS = "AuthenticatedUser" # High CPU usage profile
 POLL_INTERVAL = 5 # seconds
 TEST_DURATION = 120 # seconds
 
-USERS = 1000
-SPAWN_RATE = 20
+USERS = 10
+SPAWN_RATE = 1
 
 # Global list to store metrics
 metrics_data = []
@@ -740,8 +740,8 @@ def generate_k8s_report(results_dir):
 
 def run_hpa_test():
     parser = argparse.ArgumentParser(description='Run Locust HPA Test')
-    parser.add_argument('--users', type=int, default=1000, help='Number of users')
-    parser.add_argument('--spawn-rate', type=int, default=50, help='Spawn rate')
+    parser.add_argument('--users', type=int, default=10, help='Number of users')
+    parser.add_argument('--spawn-rate', type=int, default=1, help='Spawn rate')
     parser.add_argument('--duration', type=int, default=120, help='Test duration in seconds')
     parser.add_argument('--user-class', type=str, default="AuthenticatedUser", help='Locust User Class')
     args = parser.parse_args()
