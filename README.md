@@ -2,7 +2,11 @@
 
 <img width="851" height="254" alt="Ekran Resmi 2025-12-19 15 48 15" src="https://github.com/user-attachments/assets/5c53e102-bb7f-4f8e-b90d-5df49bd88c7d" />
 
-This project is a cloud-native application deployed on Google Cloud Platform (GCP) using Terraform.
+This project is a **cloud-native** application deployed on _Google Cloud Platform_ using _Terraform_.  The application source code is taken from [this repo](https://github.com/bounswe/bounswe2025group7). The cloud deployment architecture and infrastructure automation (_Terraform, Kubernetes, Cloud Functions, Load Testing_) are developed for the **CmpE 48A Cloud Computing** course by:
+
+*   Kerem Haktan Kurt
+*   Mustafa Batuhan Büber
+
 
 ## Project Structure
 
