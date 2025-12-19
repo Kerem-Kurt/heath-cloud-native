@@ -1,4 +1,0 @@
-Method,Name,Error,Occurrences
-GET,/api/recipe/get-all [Journey],RemoteDisconnected('Remote end closed connection without response'),31
-GET,/api/recipe/get-all [Journey],"ConnectionResetError(54, 'Connection reset by peer')",2
-POST,/api/auth/register,CatchResponseError('Registration failed: '),41

@@ -1,2 +1,0 @@
-Method,Name,Error,Occurrences
-POST,/api/auth/register,CatchResponseError('Registration failed: '),26
