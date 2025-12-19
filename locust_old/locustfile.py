@@ -1,16 +1,10 @@
 from locust import HttpUser, task, between, tag, SequentialTaskSet
-from locust.exception import StopUser
 import random
 import string
-import time # Added for time.sleep
 
 # --- Helper Functions ---
 def random_string(length=8):
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
-
-def get_placeholder_image():
-    # 1x1 Pixel Black Transparent GIF (Smallest valid image)
-    return "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs="
 
 def register_and_login(user):
     user.username = f"user_{random_string()}@test.com"
@@ -30,23 +24,6 @@ def register_and_login(user):
             token = response.json().get("accessToken")
             if token:
                 user.client.headers.update({"Authorization": f"Bearer {token}"})
-                
-                # Submit Interest Form (Required for new users)
-                interest_payload = {
-                    "name": f"User_{random_string(4)}",
-                    "surname": f"Surname_{random_string(4)}",
-                    "dateOfBirth": "1995-05-15",
-                    "height": random.randint(160, 190),
-                    "weight": round(random.uniform(55.0, 90.0), 1),
-                    "gender": random.choice(["Male", "Female"]),
-                    "profilePhoto": get_placeholder_image() # Sending a valid Base64 image
-                }
-                
-                with user.client.post("/api/interest-form/submit", json=interest_payload, catch_response=True, name="/api/interest-form/submit") as form_response:
-                    if form_response.status_code != 200:
-                        form_response.failure(f"Interest Form submission failed: {form_response.text}")
-                        return False
-                
                 return True
         else:
             response.failure(f"Login failed: {response.text}")
@@ -87,36 +64,23 @@ class AuthenticatedUser(HttpUser):
     wait_time = between(2, 5)
     
     def on_start(self):
-        # Retry loop instead of quitting
-        while not register_and_login(self):
-            time.sleep(5) # Wait 5 seconds and try again
-            # raise StopUser()  <-- COMMENT THIS OUT
+        register_and_login(self)
 
     @tag('read', 'db_read_complex')
     @task(3)
     def check_homepage_feed(self):
-        with self.client.get("/api/recipe/get-all", catch_response=True, name="/api/recipe/get-all [Complex Read]") as response:
-            if response.status_code != 200:
-                response.failure(f"Failed to get recipes: {response.status_code}")
+        self.client.get("/api/recipe/get-all", name="/api/recipe/get-all [Complex Read]")
 
     @tag('read', 'db_read_single')
     @task(2)
     def view_random_recipe_details(self):
         # First get a list to find an ID (simulating user browsing)
-        with self.client.get("/api/recipe/get-all", catch_response=True, name="/api/recipe/get-all [Setup]") as response:
+        with self.client.get("/api/recipe/get-all", name="/api/recipe/get-all [Setup]") as response:
             if response.status_code == 200:
-                try:
-                    recipes = response.json()
-                    if recipes:
-                        target = random.choice(recipes)
-                        # Nested with-block for the second request
-                        with self.client.get(f"/api/recipe/get?recipeId={target['id']}", catch_response=True, name="/api/recipe/get [Single Read]") as detail_response:
-                             if detail_response.status_code != 200:
-                                 detail_response.failure(f"Failed to get recipe details: {detail_response.status_code}")
-                except Exception as e:
-                    response.failure(f"Failed to parse JSON: {e}")
-            else:
-                 response.failure(f"Failed to get recipe list: {response.status_code}")
+                recipes = response.json()
+                if recipes:
+                    target = random.choice(recipes)
+                    self.client.get(f"/api/recipe/get?recipeId={target['id']}", name="/api/recipe/get [Single Read]")
 
     @tag('write', 'db_write')
     @task(1)
@@ -124,19 +88,14 @@ class AuthenticatedUser(HttpUser):
         payload = {
             "title": f"Recipe {random_string()}",
             "instructions": ["Mix ingredients", "Bake at 350F", "Serve warm"],
-            "ingredients": [
-                {"name": "Flour", "amount": 200, "unit": "g"},
-                {"name": "Sugar", "amount": 100, "unit": "g"}
-            ],
+            "ingredients": ["Flour", "Sugar", "Eggs"],
             "tag": "Test",
             "type": random.choice(["Lunch", "Dinner", "Dessert"]),
-            "photo": get_placeholder_image(),
+            "photo": "",
             "totalCalorie": random.randint(100, 800),
             "price": round(random.uniform(5.0, 50.0), 2)
         }
-        with self.client.post("/api/recipe/create", json=payload, catch_response=True, name="/api/recipe/create [DB Write]") as response:
-            if response.status_code != 200:
-                response.failure(f"Failed to create recipe: {response.status_code}")
+        self.client.post("/api/recipe/create", json=payload, name="/api/recipe/create [DB Write]")
 
 class SocialUser(HttpUser):
     """
@@ -147,24 +106,20 @@ class SocialUser(HttpUser):
     feed_ids = []
 
     def on_start(self):
-        if not register_and_login(self):
-            raise StopUser()  # Stop user if registration/login fails
-        # Fetch recent feeds to populate local cache of IDs
-        self.refresh_feeds()
+        if register_and_login(self):
+            # Fetch recent feeds to populate local cache of IDs
+            self.refresh_feeds()
             
     def refresh_feeds(self):
-        with self.client.get("/api/feeds/recent?pageNumber=0", catch_response=True, name="/api/feeds/recent [Setup]") as response:
-            if response.status_code == 200:
-                try:
-                    feeds = response.json()
-                    # Extract IDs safely
-                    self.feed_ids = [f['id'] for f in feeds if isinstance(f, dict) and 'id' in f]
-                    
-                    # Fallback if empty
-                    if not self.feed_ids:
-                        self.create_fallback_feed()
-                except:
-                    pass
+        response = self.client.get("/api/feeds/recent?pageNumber=0", name="/api/feeds/recent [Setup]")
+        if response.status_code == 200:
+            feeds = response.json()
+            # Extract IDs safely
+            self.feed_ids = [f['id'] for f in feeds if isinstance(f, dict) and 'id' in f]
+            
+            # Fallback if empty
+            if not self.feed_ids:
+                self.create_fallback_feed()
 
     def create_fallback_feed(self):
         payload = {
@@ -192,9 +147,7 @@ class SocialUser(HttpUser):
             if not self.feed_ids: return
 
         feed_id = random.choice(self.feed_ids)
-        with self.client.post("/api/feeds/like", json={"feedId": feed_id}, catch_response=True, name="/api/feeds/like [DB Update]") as response:
-             if response.status_code != 200:
-                 response.failure(f"Failed to like feed: {response.status_code}")
+        self.client.post("/api/feeds/like", json={"feedId": feed_id}, name="/api/feeds/like [DB Update]")
 
     @tag('social', 'db_write')
     @task(2)
@@ -205,9 +158,7 @@ class SocialUser(HttpUser):
 
         feed_id = random.choice(self.feed_ids)
         msg = random.choice(["Great!", "Yummy!", "Nice photo", "Will try this"])
-        with self.client.post("/api/feeds/comment", json={"feedId": feed_id, "message": msg}, catch_response=True, name="/api/feeds/comment [DB Write]") as response:
-             if response.status_code != 200:
-                 response.failure(f"Failed to comment: {response.status_code}")
+        self.client.post("/api/feeds/comment", json={"feedId": feed_id, "message": msg}, name="/api/feeds/comment [DB Write]")
 
     @tag('social', 'db_read')
     @task(1)
@@ -219,9 +170,7 @@ class SocialUser(HttpUser):
         # Note: Adjust endpoint if a specific /comments endpoint exists. 
         # For now, we assume getting the recipe/feed details loads comments.
         # Check backend: usually /api/recipe/get?recipeId=... or similar
-        with self.client.get(f"/api/recipe/get?recipeId={feed_id}", catch_response=True, name="/api/recipe/get [Social Read]") as response:
-             if response.status_code != 200:
-                 response.failure(f"Failed to view comments: {response.status_code}")
+        self.client.get(f"/api/recipe/get?recipeId={feed_id}", name="/api/recipe/get [Social Read]")
 
 
 class JourneyTaskSet(SequentialTaskSet):
@@ -230,28 +179,25 @@ class JourneyTaskSet(SequentialTaskSet):
     """
     @task
     def browse_feeds(self):
-        with self.client.get("/api/recipe/get-all", catch_response=True, name="/api/recipe/get-all [Journey]") as response:
-            if response.status_code == 200:
-                recipes = response.json()
-                if recipes:
-                    self.parent.target_recipe_id = recipes[0]['id']
+        response = self.client.get("/api/recipe/get-all", name="/api/recipe/get-all [Journey]")
+        if response.status_code == 200:
+            recipes = response.json()
+            if recipes:
+                self.parent.target_recipe_id = recipes[0]['id']
 
     @task
     def view_details(self):
         if hasattr(self.parent, 'target_recipe_id'):
-            with self.client.get(f"/api/recipe/get?recipeId={self.parent.target_recipe_id}", catch_response=True, name="/api/recipe/get [Journey]") as response:
-                 pass
+            self.client.get(f"/api/recipe/get?recipeId={self.parent.target_recipe_id}", name="/api/recipe/get [Journey]")
 
     @task
     def save_recipe(self):
         if hasattr(self.parent, 'target_recipe_id'):
-            with self.client.post("/api/saved-recipes/save", json={"recipeId": self.parent.target_recipe_id}, catch_response=True, name="/api/saved-recipes/save [Journey]") as response:
-                 pass
+            self.client.post("/api/saved-recipes/save", json={"recipeId": self.parent.target_recipe_id}, name="/api/saved-recipes/save [Journey]")
 
     @task
     def view_my_saved_recipes(self):
-        with self.client.get("/api/saved-recipes/get-all", catch_response=True, name="/api/saved-recipes/get-all [Journey]") as response:
-             pass
+        self.client.get("/api/saved-recipes/get-all", name="/api/saved-recipes/get-all [Journey]")
 
 class JourneyUser(HttpUser):
     """
@@ -262,5 +208,4 @@ class JourneyUser(HttpUser):
     tasks = [JourneyTaskSet]
     
     def on_start(self):
-        if not register_and_login(self):
-            raise StopUser()  # Stop user if registration/login fails
+        register_and_login(self)

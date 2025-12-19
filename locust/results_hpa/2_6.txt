@@ -1,0 +1,41 @@
+# UPDATED THE postgresql MAX CONNECTIONS to 1000 (default 100) (It was getting stuck there)
+# 16:43 kubectl delete pod -l app=backend --field-selector spec.nodeName=gke-heath-cluster-heath-node-pool-59eef16e-s6mp
+
+
+USERS = 2000
+SPAWN_RATE = 1
+
+# ================== Database ==================
+db_machine_type = "e2-standard-6" # 6 vCPUs, 24 GB RAM
+db_disk_size    = 20 # GB
+db_image        = "ubuntu-os-cloud/ubuntu-2204-lts"
+
+# ================== GKE Cluster ==================
+gke_node_machine_type = "e2-standard-2" # Changed to 2 vCPUs to force scaling easier
+gke_node_count        = 1
+
+# If autoscaling is enabled, the min and max node counts are used.
+gke_autoscaling_enabled = true
+gke_min_node_count      = 1
+gke_max_node_count      = 3
+
+gke_disk_size_gb        = 50
+gke_disk_type           = "pd-standard"
+
+
+# ================== Backend ==================
+# The resources guaranteed to each backend pod.
+backend_cpu_request      = "250m" 
+backend_memory_request   = "512Mi" # 0.5 GB
+
+# The maximum resources a backend pod is allowed to use.
+# If it tries to use more, it may be restarted.
+backend_cpu_limit        = "1000m"
+backend_memory_limit     = "1Gi" # 1 GB
+
+# If HPA is enabled, the min and max replicas are used.
+backend_hpa_enabled      = true
+backend_hpa_min_replicas = 1
+backend_hpa_max_replicas = 9
+backend_hpa_cpu_target   = 70 # percentage
+backend_db_pool_size     = 50 ####### UPDATED
