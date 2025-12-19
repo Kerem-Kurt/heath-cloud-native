@@ -41,9 +41,18 @@ First, authenticate with Google Cloud to allow Terraform to create resources.
     gcloud config set project <your-gcp-project-id>
     ```
 
-3.  Configure Application Default Credentials (ADC) for Terraform:
+3.  Check your project ID:
     ```bash
-    gcloud auth application-default login
+    gcloud config get-value project
+    ```
+
+4.  Grant Cloud Build permissions:
+    ```bash
+    gcloud projects add-iam-policy-binding <your-gcp-project-id> --member="user:<your-email>" --role="roles/cloudbuild.builds.editor"
+    ```
+
+5.  Configure Application Default Credentials (ADC) for Terraform:
+    ```bash
     gcloud auth application-default set-quota-project <your-gcp-project-id>
     ```
 
