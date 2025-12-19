@@ -1,11 +1,11 @@
-project_id       = "heath-cloud-native-kerem-1"
+project_id       = "your-gcp-project-id"
 region           = "us-central1"
 zone             = "us-central1-a"
 sendgrid_api_key = "SENDGRID_API_KEY"
 sender_email     = "SENDGRID_SENDER_EMAIL"
 
 # ================== Database ==================
-db_machine_type = "e2-custom-6-24576" # 6 vCPUs, 24 GB RAM
+db_machine_type = "e2-small" # 2 vCPUs, 4 GB RAM
 db_disk_size    = 20 # GB
 db_image        = "ubuntu-os-cloud/ubuntu-2204-lts"
 
