@@ -14,6 +14,7 @@ resource "google_project_iam_member" "gke_sa_default_role" {
 resource "google_container_cluster" "primary" {
   name       = "heath-cluster"
   location   = var.zone
+  deletion_protection = false
   depends_on = [google_project_service.container]
 
   # We can't create a cluster with no node pool defined, but we want to only use
